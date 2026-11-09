@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thực hành Vật lí ảo – Lớp 10, 11, 12</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#1c2333;--muted:#5b657a;--line:#dde2ee;--accent:#2457d6;--accent2:#e8eefc;--ok:#12805c;--warn:#a85a05}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+h1{font-size:20px;margin:0;padding:14px 0 6px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 8px}
+.tabs{display:flex;gap:6px;padding-bottom:10px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:#fff;padding:7px 16px;border-radius:999px;font-size:14px;cursor:pointer;color:var(--ink)}
+.tabs button[aria-selected=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+details.card{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden}
+details.card>summary{cursor:pointer;padding:14px 16px;list-style:none;display:flex;align-items:center;gap:10px;font-weight:600}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"▾";margin-left:auto;color:var(--muted)}
+details.card[open]>summary::after{content:"▴"}
+.num{background:var(--accent2);color:var(--accent);border-radius:8px;padding:2px 9px;font-size:13px;min-width:38px;text-align:center}
+.body{padding:4px 16px 18px;border-top:1px solid var(--line)}
+.body h4{margin:16px 0 6px;font-size:14px}
+.body p,.body li{font-size:14px;margin:4px 0}
+.body ol{padding-left:20px;margin:4px 0}
+.simtabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 8px}
+.simtabs button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+.simtabs button[aria-selected=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.simbox{border:1px solid var(--line);border-radius:10px;background:#fbfcff;overflow:hidden}
+.custom{padding:12px}
+.sim-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr);gap:14px;align-items:start}
+@media(max-width:820px){.sim-grid{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px;display:block;touch-action:none}
+.ctrl label{display:block;font-size:13px;margin:8px 0 2px}
+.ctrl input[type=range]{width:100%}
+.ctrl input[type=number],.ctrl select{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:14px}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+button.act{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer}
+button.act.alt{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button.act:disabled{opacity:.5;cursor:default}
+.readout{background:#0f1830;color:#bfe3ff;border-radius:8px;padding:8px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;margin:6px 0}
+.readout b{color:#fff}
+table.dt{border-collapse:collapse;width:100%;font-size:13px;margin-top:10px}
+table.dt th,table.dt td{border:1px solid var(--line);padding:4px 6px;text-align:center}
+table.dt th{background:#f1f4fb;font-weight:600}
+.res{font-size:13px;margin-top:8px}
+.res .ok,.ok{color:var(--ok);font-weight:600}
+.msg{font-size:12px;color:var(--warn);min-height:16px}
+.hint{font-size:12px;color:var(--muted);margin-top:6px}
+footer{color:var(--muted);font-size:12px;padding:20px 0 40px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Thực hành Vật lí ảo – Lớp 10, 11, 12</h1>
+    <p class="sub">13 bài thí nghiệm theo danh mục chương trình. Mỗi bài có mục tiêu, các bước làm, mô phỏng và bảng ghi số liệu.</p>
+    <div class="tabs" role="tablist" id="gradeTabs">
+      <button role="tab" aria-selected="true" data-g="10">Lớp 10 (5 bài)</button>
+      <button role="tab" aria-selected="false" data-g="11">Lớp 11 (4 bài)</button>
+      <button role="tab" aria-selected="false" data-g="12">Lớp 12 (4 bài)</button>
+    </div>
+  </div>
+</header>
+<main class="wrap">
+  <section id="g10"></section>
+  <section id="g11" hidden></section>
+  <section id="g12" hidden></section>
+  <footer>Số liệu đo trong các mô phỏng được tạo từ mô hình vật lí, có sai số ngẫu nhiên nhỏ để giống phép đo thật. Giá trị “thật” của mỗi bài được giấu cho đến khi bấm nút hiện đáp án.</footer>
+</main>
+
+<script>
+"use strict";
+/* ================= Tiện ích dùng chung ================= */
+const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+const MU0 = 4 * Math.PI * 1e-7, G_STD = 9.8;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const mean = a => a.reduce((s, x) => s + x, 0) / a.length;
+const meanDev = a => { const m = mean(a); return mean(a.map(x => Math.abs(x - m))); };
+const rnd = (x, step) => Math.round(x / step) * step;
+const stat = (a, d, unit) => a.length ? "Trung bình = <b>" + mean(a).toFixed(d) + "</b> " + unit + " &nbsp; Δ = <b>" + meanDev(a).toFixed(d) + "</b> " + unit : "";
+
+function Log(el, heads, max){
+  max = max || 12;
+  const items = [];
+  el.innerHTML = '<table class="dt"><thead><tr><th>Lần</th>' + heads.map(h => "<th>" + h + "</th>").join("") + "</tr></thead><tbody></tbody></table>";
+  const tb = el.querySelector("tbody");
+  const draw = () => { tb.innerHTML = items.map((it, i) => "<tr><td>" + (i + 1) + "</td>" + it.c.map(x => "<td>" + x + "</td>").join("") + "</tr>").join(""); };
+  return {
+    add(c, d){ if (items.length >= max) return false; items.push({ c, d }); draw(); return true; },
+    clear(){ items.length = 0; draw(); },
+    data(){ return items.map(i => i.d); }
+  };
+}
+
+function lineFit(pts){
+  const n = pts.length; if (n < 2) return null;
+  let sx = 0, sy = 0, sxx = 0, sxy = 0;
+  pts.forEach(p => { sx += p.x; sy += p.y; sxx += p.x * p.x; sxy += p.x * p.y; });
+  const d = n * sxx - sx * sx; if (Math.abs(d) < 1e-12) return null;
+  const b = (n * sxy - sx * sy) / d;
+  return { a: (sy - b * sx) / n, b };
+}
+function niceStep(max){ const raw = max / 5, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
+function plotXY(cv, pts, xl, yl, fit, xr, yr){
+  const g = cv.getContext("2d"), W = cv.width, H = cv.height, L = 58, B = 40, T = 12, R = 14;
+  g.clearRect(0, 0, W, H);
+  const xmax = Math.max(xr || 0, ...pts.map(p => p.x)) * 1.12 || 1, ymax = Math.max(yr || 0, ...pts.map(p => p.y)) * 1.12 || 1;
+  const X = v => L + v / xmax * (W - L - R), Y = v => H - B - v / ymax * (H - B - T);
+  g.font = "11px sans-serif"; g.fillStyle = "#444";
+  const sx = niceStep(xmax), sy = niceStep(ymax);
+  const dx = Math.max(0, -Math.floor(Math.log10(sx))), dy = Math.max(0, -Math.floor(Math.log10(sy)));
+  g.textAlign = "right";
+  for (let v = 0; v <= ymax + 1e-9; v += sy) { g.strokeStyle = "#eee"; g.beginPath(); g.moveTo(L, Y(v)); g.lineTo(W - R, Y(v)); g.stroke(); g.fillText(v.toFixed(dy), L - 5, Y(v) + 4); }
+  g.textAlign = "center";
+  for (let v = 0; v <= xmax + 1e-9; v += sx) g.fillText(v.toFixed(dx), X(v), H - B + 14);
+  g.strokeStyle = "#444"; g.beginPath(); g.moveTo(L, T); g.lineTo(L, H - B); g.lineTo(W - R, H - B); g.stroke();
+  g.fillText(xl, W / 2, H - 6); g.save(); g.translate(12, H / 2); g.rotate(-Math.PI / 2); g.fillText(yl, 0, 0); g.restore();
+  if (fit) { g.strokeStyle = "#c0251e"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(X(0), Y(fit.a)); g.lineTo(X(xmax), Y(fit.a + fit.b * xmax)); g.stroke(); }
+  g.fillStyle = "#2457d6"; pts.forEach(p => { g.beginPath(); g.arc(X(p.x), Y(p.y), 4, 0, 2 * Math.PI); g.fill(); });
+}
+function arrow(g, x1, y1, x2, y2, col, w){
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = w || 2.5;
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - 10 * Math.cos(a - 0.4), y2 - 10 * Math.sin(a - 0.4)); g.lineTo(x2 - 10 * Math.cos(a + 0.4), y2 - 10 * Math.sin(a + 0.4)); g.closePath(); g.fill();
+}
+
+/* ================= Dữ liệu 13 bài ================= */
+const EXPS = [
+ { grade:10, no:"10.1", title:"Khảo sát chuyển động trên mặt phẳng nghiêng – Xác định hệ số ma sát trượt",
+   goal:"Đo thời gian vật trượt trên mặt phẳng nghiêng, tính gia tốc rồi suy ra hệ số ma sát trượt μ giữa vật và mặt phẳng.",
+   steps:["Chọn cặp bề mặt và góc nghiêng α (đủ lớn để vật trượt).","Đặt quãng đường s, bấm “Thả vật”, đọc thời gian t trên đồng hồ cổng quang.","Tính gia tốc a = 2s/t².","Tính μ = (g·sinα − a)/(g·cosα), với g = 9,8 m/s².","Lặp lại với các góc khác, lấy giá trị trung bình của μ."],
+   sims:[{label:"Mặt phẳng nghiêng",custom:"incline"}] },
+ { grade:10, no:"10.2", title:"Khảo sát chuyển động rơi tự do – Xác định gia tốc rơi tự do",
+   goal:"Đo thời gian rơi t của vật ở các độ cao s khác nhau, từ đó xác định gia tốc rơi tự do g.",
+   steps:["Chọn độ cao thả s.","Bấm “Thả vật” (hình ảnh quay chậm), đọc thời gian rơi t trên đồng hồ hiện số.","Ghi s, t vào bảng; máy tự tính t² và g = 2s/t².","Lặp lại ở các độ cao khác. Đồ thị s theo t² là đường thẳng có hệ số góc g/2."],
+   sims:[{label:"Rơi tự do",custom:"freefall"}] },
+ { grade:10, no:"10.3", title:"Xác định hợp lực của 2 lực đồng quy",
+   goal:"Dùng hai lực kế kéo một điểm nút, tổng hợp lực theo quy tắc hình bình hành và so sánh với lực cân bằng đo được.",
+   steps:["Chọn độ lớn F₁, F₂ và góc θ giữa hai lực.","Bật hình bình hành lực, đọc độ dài đường chéo (tỉ xích 1 N ứng với 1 cm).","Đọc lực kế thứ ba, lực này cân bằng với hợp lực: F đo.","So sánh F tính (công thức) với F đo, tính sai lệch tương đối."],
+   sims:[{label:"Hợp lực của hai lực đồng quy",custom:"vec2"}] },
+ { grade:10, no:"10.4", title:"Xác định hợp lực của 2 lực song song cùng chiều",
+   goal:"Tìm điểm đặt của hợp lực hai lực song song cùng chiều và kiểm nghiệm quy tắc: F = F₁ + F₂, F₁·d₁ = F₂·d₂.",
+   steps:["Chọn hai quả cân F₁, F₂ và vị trí treo của chúng trên thanh.","Dịch chuyển điểm đỡ (lực kế) cho đến khi thanh nằm ngang cân bằng.","Đọc F ở lực kế, đo d₁, d₂ từ điểm đỡ đến hai quả cân.","Kiểm tra F = F₁ + F₂ và F₁·d₁ = F₂·d₂."],
+   sims:[{label:"Hợp lực của hai lực song song",custom:"parallel"}] },
+ { grade:10, no:"10.5", title:"Khảo sát hiện tượng căng mặt ngoài – Xác định hệ số căng mặt ngoài",
+   goal:"Dùng lực kế nhạy đo lực lớn nhất để nhấc vòng khuyên ra khỏi mặt chất lỏng, từ đó tính hệ số căng mặt ngoài σ.",
+   steps:["Chọn chất lỏng, nhiệt độ và kích thước vòng (D₁, D₂).","Bấm “Kéo vòng lên” và theo dõi số chỉ lực kế.","Ghi lực lớn nhất F_max trước khi màng chất lỏng đứt.","Tính σ = F_max / [π(D₁ + D₂)].","Lặp lại 5 lần, tính giá trị trung bình và sai số."],
+   sims:[{label:"Căng mặt ngoài",custom:"surface"}] },
+ { grade:11, no:"11.1", title:"Lực từ và cảm ứng điện từ",
+   goal:"Phần A: khảo sát độ lớn và chiều lực từ tác dụng lên đoạn dây mang dòng điện trong từ trường đều. Phần B: quan sát hiện tượng cảm ứng điện từ.",
+   steps:["Phần A: thay đổi B, I, chiều dài l và góc α; đọc lực từ F; kiểm tra F = B·I·l·sinα và xác định chiều lực bằng quy tắc bàn tay trái.","Phần B: kéo nam châm ra vào cuộn dây (hoặc bấm “Tự động”), quan sát kim điện kế và độ sáng bóng đèn; thay đổi tốc độ, số vòng dây, độ mạnh và cực nam châm."],
+   sims:[{label:"Phần A: Lực từ lên đoạn dây",custom:"magforce"},{label:"Phần B: Cảm ứng điện từ",custom:"induction"}] },
+ { grade:11, no:"11.2", title:"Bộ thí nghiệm quang hình – Đo tiêu cự của thấu kính",
+   goal:"Bố trí vật sáng, thấu kính hội tụ và màn; đo khoảng cách vật – ảnh để xác định tiêu cự f.",
+   steps:["Chọn một thấu kính (bấm “Đổi thấu kính” để lấy thấu kính khác), đặt vật cách thấu kính d.","Di chuyển màn đến khi ảnh rõ nét, đọc d′.","Tính f = d·d′/(d + d′).","Kiểm tra phương pháp Silbermann: khi d = d′ = 2f thì khoảng cách vật – ảnh L = 4f.","Lặp lại với nhiều giá trị d, lấy trung bình f."],
+   sims:[{label:"Đo tiêu cự thấu kính hội tụ",custom:"lens"}] },
+ { grade:11, no:"11.3", title:"Dòng điện không đổi – Đo suất điện động E và điện trở trong r của pin",
+   goal:"Thay đổi biến trở, đo cặp U – I và xác định E, r từ đồ thị U = E − r·I.",
+   steps:["Chọn một pin (bấm “Đổi pin” để lấy pin khác).","Đặt giá trị biến trở R, đọc U (vôn kế) và I (ampe kế), bấm “Ghi số liệu”.","Lấy ít nhất 5 cặp (U, I) với R khác nhau.","Đồ thị U theo I là đường thẳng: cắt trục U tại E, độ dốc bằng −r."],
+   sims:[{label:"Đo E và r của pin",custom:"battery"}] },
+ { grade:11, no:"11.4", title:"Đo thành phần nằm ngang của từ trường Trái Đất",
+   goal:"Dùng cuộn dây (la bàn tang) tạo từ trường vuông góc với B_h, đo độ lệch của kim nam châm để suy ra B_h.",
+   steps:["Đặt mặt phẳng cuộn dây trùng với kinh tuyến từ (hướng Bắc – Nam).","Cho dòng điện I chạy qua cuộn dây, kim lệch một góc θ.","Tính B_h = μ₀·N·I / (2R·tanθ).","Đảo chiều dòng điện, đo lại và lấy trung bình để giảm sai số.","Lặp lại với nhiều giá trị I."],
+   sims:[{label:"La bàn tang",custom:"tangent"}] },
+ { grade:12, no:"12.1", title:"Dao động cơ học",
+   goal:"Đo chu kì con lắc đơn và con lắc lò xo, kiểm chứng T = 2π√(l/g) và T = 2π√(m/k).",
+   steps:["Chọn con lắc, chọn chiều dài l (hoặc khối lượng m) và số dao động n (10 hoặc 20).","Bấm “Đo thời gian” (tua nhanh), đọc thời gian t của n dao động.","Tính T = t/n và T².","Đồ thị T² theo l (hoặc theo m) là đường thẳng: hệ số góc 4π²/g (hoặc 4π²/k)."],
+   sims:[{label:"Con lắc đơn",custom:"pendulum"},{label:"Con lắc lò xo",custom:"spring"}] },
+ { grade:12, no:"12.2", title:"Đo vận tốc truyền âm trong không khí",
+   goal:"Dùng ống cộng hưởng và nguồn âm có tần số f đã biết để xác định bước sóng λ, từ đó tính tốc độ truyền âm v.",
+   steps:["Chọn tần số f của nguồn âm.","Kéo pít-tông thay đổi chiều dài cột khí; âm nghe to nhất ở vị trí cộng hưởng. Ghi hai vị trí cộng hưởng liên tiếp l₁ và l₂.","Bước sóng λ = 2(l₂ − l₁).","Tính v = λ·f.","Đo ở vài tần số khác nhau, lấy trung bình."],
+   sims:[{label:"Ống cộng hưởng",custom:"resonance"}] },
+ { grade:12, no:"12.3", title:"Mạch điện xoay chiều",
+   goal:"Khảo sát mạch R, L, C mắc nối tiếp: đo các điện áp thành phần, độ lệch pha và hiện tượng cộng hưởng.",
+   steps:["Chọn R, L, C và tần số nguồn f (điện áp nguồn 12 V).","Đọc U_R, U_L, U_C, U và cường độ dòng điện I; bấm “Ghi số liệu”.","Tính Z = U/I và kiểm tra U² = U_R² + (U_L − U_C)².","Thay đổi f để tìm cộng hưởng (I lớn nhất, U_L = U_C)."],
+   sims:[{label:"Mạch R–L–C nối tiếp",custom:"rlc"}] },
+ { grade:12, no:"12.4", title:"Đo bước sóng ánh sáng",
+   goal:"Dùng laser chiếu qua khe Young để tạo vân giao thoa, đo khoảng vân i rồi tính bước sóng λ.",
+   steps:["Chọn laser, khoảng cách hai khe a và khoảng cách từ khe đến màn D.","Đặt vạch đỏ vào tâm một vân sáng, vạch xanh vào tâm vân sáng thứ k + 1 để đo k khoảng vân.","Tính i = Δy/k.","Tính λ = a·i/D.","Thay đổi a hoặc D, lấy trung bình λ."],
+   sims:[{label:"Giao thoa khe Young",custom:"young"}] }
+];
+
+/* ================= Dựng giao diện ================= */
+const MOUNTS = {};
+function showSim(card, e, idx){
+  const box = card.querySelector(".simbox");
+  card.querySelectorAll(".simtabs button").forEach((b, i) => b.setAttribute("aria-selected", i === idx));
+  box.innerHTML = "";
+  const div = document.createElement("div"); div.className = "custom"; box.appendChild(div);
+  MOUNTS[e.sims[idx].custom](div);
+}
+function initCard(card, e){
+  const t = card.querySelector(".simtabs");
+  if (e.sims.length > 1) e.sims.forEach((s, i) => { const b = document.createElement("button"); b.textContent = s.label; b.onclick = () => showSim(card, e, i); t.appendChild(b); });
+  else t.remove();
+  showSim(card, e, 0);
+}
+function render(){
+  EXPS.forEach(e => {
+    const d = document.createElement("details"); d.className = "card";
+    d.innerHTML =
+      '<summary><span class="num">' + e.no + "</span><span>" + e.title + "</span></summary>" +
+      '<div class="body"><h4>Mục tiêu</h4><p>' + e.goal + "</p>" +
+      "<h4>Các bước thực hiện</h4><ol>" + e.steps.map(s => "<li>" + s + "</li>").join("") + "</ol>" +
+      '<h4>Mô phỏng</h4><div class="simtabs"></div><div class="simbox"></div></div>';
+    d.addEventListener("toggle", () => { if (d.open && !d.dataset.init) { d.dataset.init = "1"; initCard(d, e); } });
+    document.getElementById("g" + e.grade).appendChild(d);
+  });
+  document.querySelectorAll("#gradeTabs button").forEach(b => b.onclick = () => {
+    document.querySelectorAll("#gradeTabs button").forEach(x => x.setAttribute("aria-selected", x === b));
+    [10, 11, 12].forEach(g => document.getElementById("g" + g).hidden = String(g) !== b.dataset.g);
+  });
+}
+
+/* ================= 10.1 Mặt phẳng nghiêng ================= */
+MOUNTS.incline = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="560" height="320"></canvas></div><div class="ctrl">' +
+   '<label>Cặp bề mặt<select class="sf"><option>Gỗ trên gỗ</option><option>Gỗ trên kim loại</option><option>Gỗ trên nhựa</option><option>Gỗ trên giấy nhám</option></select></label>' +
+   '<label>Góc nghiêng α: <b class="av">35</b>°<input type="range" class="al" min="10" max="60" step="1" value="35"></label>' +
+   '<label>Quãng đường s: <b class="sv">0.50</b> m<input type="range" class="s" min="0.2" max="1" step="0.05" value="0.5"></label>' +
+   '<div class="btns"><button class="act go">Thả vật</button><button class="act alt rs">Đặt lại</button><button class="act rec" disabled>Ghi vào bảng</button></div>' +
+   '<div class="readout">Đồng hồ cổng quang: t = <b class="tv">—</b> s</div><div class="msg"></div></div></div>' +
+   '<div class="lg"></div><div class="res mean"></div><div class="btns"><button class="act alt rv">Hiện μ thật</button><button class="act alt clr">Xoá bảng</button></div><div class="res tr"></div>';
+  const q = s => root.querySelector(s), g = q("canvas").getContext("2d");
+  const base = [0.38, 0.3, 0.25, 0.55];
+  const mus = base.map(b => b + gauss() * 0.01);
+  const lg = Log(q(".lg"), ["α (°)", "s (m)", "t (s)", "a (m/s²)", "μ"]);
+  const ppm = 300, P = { x: 520, y: 290 }, Ltot = 1.06;
+  let dist = 0, running = false, t0 = 0, tTrue = 0, a = 0, tMeas = null, done = false;
+  const mu = () => mus[q(".sf").selectedIndex], al = () => +q(".al").value, s = () => +q(".s").value;
+  function draw(){
+    const A = al() * Math.PI / 180; g.clearRect(0, 0, 560, 320);
+    const top = { x: P.x - Ltot * ppm * Math.cos(A), y: P.y - Ltot * ppm * Math.sin(A) };
+    g.fillStyle = "#e9edf5"; g.beginPath(); g.moveTo(top.x, top.y); g.lineTo(P.x, P.y); g.lineTo(top.x, P.y); g.closePath(); g.fill();
+    g.strokeStyle = "#445"; g.lineWidth = 3; g.beginPath(); g.moveTo(top.x, top.y); g.lineTo(P.x, P.y); g.stroke();
+    g.beginPath(); g.moveTo(top.x - 10, P.y); g.lineTo(P.x + 10, P.y); g.stroke();
+    const pt = u => ({ x: P.x - u * ppm * Math.cos(A), y: P.y - u * ppm * Math.sin(A) });
+    const u0 = 1.0, mk = (u, col, lab) => { const p = pt(u); g.save(); g.translate(p.x, p.y); g.rotate(A); g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -48); g.stroke(); g.restore(); g.fillStyle = col; g.font = "11px sans-serif"; g.fillText(lab, p.x - 40 * Math.sin(A) - 6, p.y - 54 * Math.cos(A)); };
+    mk(u0, "#2457d6", "xuất phát"); mk(u0 - s(), "#c0251e", "cổng quang");
+    const p = pt(u0 - dist); g.save(); g.translate(p.x, p.y); g.rotate(A);
+    g.fillStyle = "#b9824a"; g.fillRect(-20, -26, 40, 26); g.strokeStyle = "#6a4620"; g.lineWidth = 1.5; g.strokeRect(-20, -26, 40, 26); g.restore();
+    g.fillStyle = "#234"; g.font = "13px sans-serif"; g.fillText("α = " + al() + "°", P.x - 60, P.y - 8);
+  }
+  function reset(msg){ running = false; dist = 0; tMeas = null; done = false; q(".tv").textContent = "—"; q(".rec").disabled = true; q(".go").disabled = false; q(".msg").textContent = msg || ""; draw(); }
+  function tick(ts){
+    if (!running) return;
+    const el = (ts - t0) / 1000;
+    if (el >= tTrue) {
+      running = false; dist = s(); tMeas = Math.max(0.001, rnd(tTrue + gauss() * 0.004, 0.001)); done = true;
+      q(".tv").textContent = tMeas.toFixed(3); q(".rec").disabled = false; q(".go").disabled = false; draw(); return;
+    }
+    dist = 0.5 * a * el * el; q(".tv").textContent = el.toFixed(3); draw(); requestAnimationFrame(tick);
+  }
+  q(".go").onclick = () => {
+    reset(); const A = al() * Math.PI / 180;
+    if (Math.tan(A) <= mu()) { q(".msg").textContent = "Vật không trượt: lực ma sát nghỉ lớn hơn thành phần trọng lực. Hãy tăng góc nghiêng."; return; }
+    a = G_STD * (Math.sin(A) - mu() * Math.cos(A)); tTrue = Math.sqrt(2 * s() / a);
+    running = true; q(".go").disabled = true; t0 = performance.now(); requestAnimationFrame(tick);
+  };
+  q(".rs").onclick = () => reset();
+  q(".al").oninput = () => { q(".av").textContent = al(); reset(); };
+  q(".s").oninput = () => { q(".sv").textContent = s().toFixed(2); reset(); };
+  q(".sf").onchange = () => reset();
+  function showMean(){ const d = lg.data(); q(".mean").innerHTML = d.length ? "μ " + stat(d.map(x => x.mu), 3, "") : ""; }
+  q(".rec").onclick = () => {
+    if (!done) return; const A = al() * Math.PI / 180, aa = 2 * s() / (tMeas * tMeas), m = (G_STD * Math.sin(A) - aa) / (G_STD * Math.cos(A));
+    lg.add([al(), s().toFixed(2), tMeas.toFixed(3), aa.toFixed(2), m.toFixed(3)], { mu: m }); q(".rec").disabled = true; done = false; showMean();
+  };
+  q(".clr").onclick = () => { lg.clear(); showMean(); };
+  q(".rv").onclick = () => { const d = lg.data(); q(".tr").innerHTML = '<span class="ok">μ thật của cặp bề mặt này = ' + mu().toFixed(3) + "</span>" + (d.length ? " &nbsp; Sai số tương đối của trung bình: " + (Math.abs(mean(d.map(x => x.mu)) - mu()) / mu() * 100).toFixed(1) + " %" : ""); };
+  draw();
+};
+
+/* ================= 10.2 Rơi tự do ================= */
+MOUNTS.freefall = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="420" height="360"></canvas></div><div class="ctrl">' +
+   '<label>Độ cao thả s: <b class="sv">0.80</b> m<input type="range" class="s" min="0.2" max="1.5" step="0.05" value="0.8"></label>' +
+   '<div class="btns"><button class="act go">Thả vật (quay chậm)</button><button class="act rec" disabled>Ghi vào bảng</button></div>' +
+   '<div class="readout">Đồng hồ hiện số: t = <b class="tv">—</b> s</div><div class="msg"></div></div></div>' +
+   '<div class="lg"></div><canvas class="ch" width="520" height="260" style="margin-top:8px"></canvas><div class="res fit"></div>' +
+   '<div class="btns"><button class="act alt rv">Hiện g thật</button><button class="act alt clr">Xoá bảng</button></div><div class="res tr"></div>';
+  const q = s => root.querySelector(s), g = q("canvas").getContext("2d");
+  const gTrue = 9.78 + gauss() * 0.02, SLOW = 0.4, ppm = 200, yGate = 320;
+  const lg = Log(q(".lg"), ["s (m)", "t (s)", "t² (s²)", "g = 2s/t² (m/s²)"]);
+  let y = 0, running = false, t0 = 0, tTrue = 0, tMeas = null, done = false;
+  const s = () => +q(".s").value;
+  function draw(){
+    g.clearRect(0, 0, 420, 360);
+    g.fillStyle = "#cfd6e6"; g.fillRect(40, 0, 6, 340);
+    for (let m = 0; m <= 1.5; m += 0.1) { const yy = yGate - m * ppm; g.fillStyle = "#555"; g.fillRect(40, yy, m * 10 % 1 < 0.01 ? 22 : 12, 1.5); if (Math.abs(m * 10 % 5) < 0.01) { g.font = "11px sans-serif"; g.fillText((m).toFixed(1) + " m", 4, yy + 4); } }
+    g.fillStyle = "#555"; g.fillRect(200, yGate - s() * ppm - 22, 60, 8); g.fillStyle = "#888"; g.font = "11px sans-serif"; g.fillText("nam châm điện", 270, yGate - s() * ppm - 14);
+    g.fillStyle = "#c0251e"; g.fillRect(190, yGate, 80, 6); g.fillStyle = "#444"; g.fillText("cổng quang", 275, yGate + 5);
+    const by = yGate - s() * ppm + y * ppm; g.fillStyle = "#2457d6"; g.beginPath(); g.arc(230, by - 10, 10, 0, 2 * Math.PI); g.fill();
+    g.fillStyle = "#234"; g.fillText("quay chậm ×" + SLOW, 330, 20);
+  }
+  function reset(){ running = false; y = 0; tMeas = null; done = false; q(".tv").textContent = "—"; q(".rec").disabled = true; q(".go").disabled = false; draw(); }
+  function tick(ts){
+    if (!running) return;
+    const el = (ts - t0) / 1000 * SLOW;
+    if (el >= tTrue) { running = false; y = s(); tMeas = Math.max(0.001, rnd(tTrue + gauss() * 0.0008, 0.001)); done = true; q(".tv").textContent = tMeas.toFixed(3); q(".rec").disabled = false; q(".go").disabled = false; draw(); return; }
+    y = 0.5 * gTrue * el * el; q(".tv").textContent = "…"; draw(); requestAnimationFrame(tick);
+  }
+  q(".go").onclick = () => { reset(); tTrue = Math.sqrt(2 * s() / gTrue); running = true; q(".go").disabled = true; t0 = performance.now(); requestAnimationFrame(tick); };
+  q(".s").oninput = () => { q(".sv").textContent = s().toFixed(2); reset(); };
+  function refresh(){
+    const d = lg.data(), pts = d.map(x => ({ x: x.t2, y: x.s })), f = lineFit(pts);
+    plotXY(q(".ch"), pts, "t² (s²)", "s (m)", f, 0.3, 1);
+    q(".fit").innerHTML = f ? "Từ đồ thị: hệ số góc = " + f.b.toFixed(3) + " m/s² → g = 2·hệ số góc = <b>" + (2 * f.b).toFixed(2) + "</b> m/s²" + (d.length ? " &nbsp;|&nbsp; Trung bình các lần: " + stat(d.map(x => x.g), 2, "m/s²") : "") : "Cần ít nhất 2 lần đo ở các độ cao khác nhau.";
+  }
+  q(".rec").onclick = () => { if (!done) return; const t2 = tMeas * tMeas, gg = 2 * s() / t2; lg.add([s().toFixed(2), tMeas.toFixed(3), t2.toFixed(3), gg.toFixed(2)], { s: s(), t2, g: gg }); q(".rec").disabled = true; done = false; refresh(); };
+  q(".clr").onclick = () => { lg.clear(); refresh(); };
+  q(".rv").onclick = () => { q(".tr").innerHTML = '<span class="ok">g thật tại nơi làm thí nghiệm (mô hình) = ' + gTrue.toFixed(3) + " m/s²</span>"; };
+  draw(); refresh();
+};
+
+/* ================= 10.3 Hai lực đồng quy ================= */
+MOUNTS.vec2 = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="520" height="360"></canvas></div><div class="ctrl">' +
+   '<label>Lực F₁: <b class="v1">3.0</b> N<input type="range" class="f1" min="1" max="5" step="0.1" value="3"></label>' +
+   '<label>Lực F₂: <b class="v2">4.0</b> N<input type="range" class="f2" min="1" max="5" step="0.1" value="4"></label>' +
+   '<label>Góc θ giữa hai lực: <b class="v3">90</b>°<input type="range" class="th" min="20" max="160" step="5" value="90"></label>' +
+   '<label><input type="checkbox" class="pg" checked> Hiện hình bình hành lực</label>' +
+   '<div class="readout">Đường chéo (tỉ xích 1 N = 1 cm): <b class="dg">—</b> cm<br>Lực kế thứ ba (cân bằng): F đo = <b class="fm">—</b> N</div>' +
+   '<div class="btns"><button class="act rec">Ghi vào bảng</button><button class="act alt clr">Xoá bảng</button></div></div></div>' +
+   '<div class="lg"></div><div class="res mean"></div>';
+  const q = s => root.querySelector(s), g = q("canvas").getContext("2d");
+  const lg = Log(q(".lg"), ["F₁ (N)", "F₂ (N)", "θ (°)", "F tính (N)", "F đo (N)", "Sai lệch (%)"]);
+  const O = { x: 260, y: 230 }, k = 40;
+  let Fm = 0, diag = 0, Rcalc = 0;
+  const v = c => +q("." + c).value;
+  function update(){
+    q(".v1").textContent = v("f1").toFixed(1); q(".v2").textContent = v("f2").toFixed(1); q(".v3").textContent = v("th");
+    const th = v("th") * Math.PI / 180; Rcalc = Math.sqrt(v("f1") ** 2 + v("f2") ** 2 + 2 * v("f1") * v("f2") * Math.cos(th));
+    diag = rnd(Rcalc + gauss() * 0.03, 0.1); Fm = rnd(Rcalc * (1 + gauss() * 0.012), 0.01);
+    q(".dg").textContent = diag.toFixed(1); q(".fm").textContent = Fm.toFixed(2); draw();
+  }
+  function draw(){
+    g.clearRect(0, 0, 520, 360);
+    const th = v("th") * Math.PI / 180, p1 = Math.PI / 2 + th / 2, p2 = Math.PI / 2 - th / 2;
+    const e1 = { x: O.x + v("f1") * k * Math.cos(p1), y: O.y - v("f1") * k * Math.sin(p1) }, e2 = { x: O.x + v("f2") * k * Math.cos(p2), y: O.y - v("f2") * k * Math.sin(p2) };
+    const er = { x: e1.x + e2.x - O.x, y: e1.y + e2.y - O.y }, e3 = { x: 2 * O.x - er.x, y: 2 * O.y - er.y };
+    if (q(".pg").checked) { g.setLineDash([5, 4]); g.strokeStyle = "#889"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(e1.x, e1.y); g.lineTo(er.x, er.y); g.lineTo(e2.x, e2.y); g.stroke(); g.setLineDash([]); }
+    arrow(g, O.x, O.y, e1.x, e1.y, "#c0251e"); arrow(g, O.x, O.y, e2.x, e2.y, "#2457d6");
+    arrow(g, O.x, O.y, er.x, er.y, "#12805c", 3); arrow(g, O.x, O.y, e3.x, e3.y, "#7a3fd1", 2.5);
+    g.fillStyle = "#c0251e"; g.font = "13px sans-serif"; g.fillText("F₁", e1.x - 18, e1.y - 6); g.fillStyle = "#2457d6"; g.fillText("F₂", e2.x + 6, e2.y - 6);
+    g.fillStyle = "#12805c"; g.fillText("F (hợp lực)", er.x + 8, er.y); g.fillStyle = "#7a3fd1"; g.fillText("F đo (lực kế 3, cân bằng)", e3.x - 60, e3.y + 18);
+    g.fillStyle = "#222"; g.beginPath(); g.arc(O.x, O.y, 5, 0, 2 * Math.PI); g.fill();
+  }
+  ["f1", "f2", "th"].forEach(c => q("." + c).oninput = update);
+  q(".pg").onchange = draw;
+  function showMean(){ const d = lg.data(); q(".mean").innerHTML = d.length ? "Sai lệch trung bình: " + stat(d.map(x => x.e), 1, "%") : ""; }
+  q(".rec").onclick = () => { const e = Math.abs(Fm - Rcalc) / Rcalc * 100; lg.add([v("f1").toFixed(1), v("f2").toFixed(1), v("th"), Rcalc.toFixed(2), Fm.toFixed(2), e.toFixed(1)], { e }); showMean(); update(); };
+  q(".clr").onclick = () => { lg.clear(); showMean(); };
+  update();
+};
+
+/* ================= 10.4 Hai lực song song ================= */
+MOUNTS.parallel = function(root){
+  const wopts = [0.5, 1, 1.5, 2, 2.5, 3].map(w => "<option" + (w === 1 ? " selected" : "") + ">" + w.toFixed(1) + "</option>").join("");
+  const wopts2 = [0.5, 1, 1.5, 2, 2.5, 3].map(w => "<option" + (w === 2 ? " selected" : "") + ">" + w.toFixed(1) + "</option>").join("");
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="560" height="300"></canvas></div><div class="ctrl">' +
+   '<label>Lực F₁ (N)<select class="w1">' + wopts + '</select></label>' +
+   '<label>Vị trí F₁: <b class="v1">20</b> cm<input type="range" class="x1" min="5" max="45" step="1" value="20"></label>' +
+   '<label>Lực F₂ (N)<select class="w2">' + wopts2 + '</select></label>' +
+   '<label>Vị trí F₂: <b class="v2">75</b> cm<input type="range" class="x2" min="55" max="95" step="1" value="75"></label>' +
+   '<label>Điểm đỡ (lực kế) p: <b class="vp">50.0</b> cm<input type="range" class="p" min="0" max="100" step="0.5" value="50"></label>' +
+   '<div class="readout">Trạng thái: <b class="st">—</b><br>Lực kế: F = <b class="fr">—</b> N</div>' +
+   '<div class="btns"><button class="act rec">Ghi vào bảng</button><button class="act alt clr">Xoá bảng</button></div><div class="msg"></div></div></div>' +
+   '<div class="lg"></div><div class="res mean"></div>';
+  const q = s => root.querySelector(s), g = q("canvas").getContext("2d");
+  const lg = Log(q(".lg"), ["F₁ (N)", "F₂ (N)", "d₁ (cm)", "d₂ (cm)", "F (N)", "F₁d₁", "F₂d₂"]);
+  const v = c => +q("." + c).value, ppc = 4.8, X0 = 40;
+  let Fm = 0;
+  function state(){ const W1 = v("w1"), W2 = v("w2"), p = v("p"), tau = W1 * (v("x1") - p) + W2 * (v("x2") - p); return { W1, W2, p, tau, bal: Math.abs(tau) <= 0.3 * (W1 + W2) }; }
+  function update(){
+    q(".v1").textContent = v("x1"); q(".v2").textContent = v("x2"); q(".vp").textContent = v("p").toFixed(1);
+    const s = state(); Fm = rnd(s.W1 + s.W2 + gauss() * 0.01, 0.01);
+    q(".st").textContent = s.bal ? "thanh nằm ngang (cân bằng)" : (s.tau > 0 ? "nghiêng về bên phải" : "nghiêng về bên trái");
+    q(".fr").textContent = Fm.toFixed(2); draw();
+  }
+  function draw(){
+    const s = state(); g.clearRect(0, 0, 560, 300);
+    const ang = s.bal ? 0 : clamp(s.tau * 0.12, -15, 15) * Math.PI / 180, px = X0 + s.p * ppc, py = 120;
+    const pos = x => ({ x: px + (x - s.p) * ppc * Math.cos(ang), y: py + (x - s.p) * ppc * Math.sin(ang) });
+    g.fillStyle = "#f4f4f4"; g.strokeStyle = "#333"; g.lineWidth = 2; g.fillRect(px - 26, 20, 52, 46); g.strokeRect(px - 26, 20, 52, 46);
+    g.fillStyle = "#111"; g.font = "bold 13px monospace"; g.textAlign = "center"; g.fillText(Fm.toFixed(2) + " N", px, 48); g.textAlign = "left";
+    g.beginPath(); g.moveTo(px, 66); g.lineTo(px, py); g.stroke();
+    const a = pos(0), b = pos(100);
+    g.strokeStyle = s.bal ? "#12805c" : "#b45f06"; g.lineWidth = 8; g.lineCap = "round"; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+    g.lineCap = "butt"; g.font = "10px sans-serif"; g.fillStyle = "#fff";
+    for (let m = 0; m <= 100; m += 10) { const t = pos(m); g.fillStyle = "#444"; g.fillRect(t.x - 1, t.y + 6, 2, 6); if (m % 20 === 0) g.fillText(m, t.x - 6, t.y + 24); }
+    [[s.W1, v("x1"), "#c0251e", "F₁"], [s.W2, v("x2"), "#2457d6", "F₂"]].forEach(w => {
+      const t = pos(w[1]), h = 40 + w[0] * 6; g.strokeStyle = w[2]; g.lineWidth = 2; g.beginPath(); g.moveTo(t.x, t.y); g.lineTo(t.x, t.y + h); g.stroke();
+      g.fillStyle = w[2]; const sz = 14 + w[0] * 5; g.fillRect(t.x - sz / 2, t.y + h, sz, sz); g.fillStyle = "#222"; g.font = "12px sans-serif"; g.fillText(w[3] + " = " + w[0].toFixed(1) + " N", t.x - 28, t.y + h + sz + 14);
+    });
+  }
+  ["w1", "w2", "x1", "x2", "p"].forEach(c => q("." + c).addEventListener("input", update));
+  q(".rec").onclick = () => {
+    const s = state(); if (!s.bal) { q(".msg").textContent = "Thanh chưa cân bằng: hãy dịch điểm đỡ cho thanh nằm ngang rồi ghi."; return; }
+    q(".msg").textContent = "";
+    const d1 = Math.round((s.p - v("x1")) * 10) / 10, d2 = Math.round((v("x2") - s.p) * 10) / 10;
+    lg.add([s.W1.toFixed(1), s.W2.toFixed(1), d1.toFixed(1), d2.toFixed(1), Fm.toFixed(2), (s.W1 * d1).toFixed(1), (s.W2 * d2).toFixed(1)], { a: s.W1 * d1, b: s.W2 * d2, f: Fm, sum: s.W1 + s.W2 });
+    const d = lg.data(); q(".mean").innerHTML = "Sai lệch F₁d₁ so với F₂d₂ (trung bình): " + stat(d.map(x => Math.abs(x.a - x.b) / x.a * 100), 1, "%") + "<br>Sai lệch F so với F₁ + F₂: " + stat(d.map(x => Math.abs(x.f - x.sum) / x.sum * 100), 1, "%");
+  };
+  q(".clr").onclick = () => { lg.clear(); q(".mean").innerHTML = ""; };
+  update();
+};
+
+/* ================= 10.5 Căng mặt ngoài ================= */
+MOUNTS.surface = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="560" height="330"></canvas></div><div class="ctrl">' +
+   '<label>Chất lỏng<select class="liq"><option>Nước</option><option>Nước xà phòng</option><option>Rượu etylic</option><option>Glixerin</option><option>Dầu ăn</option></select></label>' +
+   '<label>Nhiệt độ: <b class="Tv">25</b> °C<input type="range" class="T" min="15" max="40" value="25"></label>' +
+   '<label>Đường kính ngoài D₁ (mm)<input type="number" class="D1" value="50" min="20" max="80" step="0.5"></label>' +
+   '<label>Đường kính trong D₂ (mm)<input type="number" class="D2" value="46" min="10" max="79" step="0.5"></label>' +
+   '<div class="btns"><button class="act go">Kéo vòng lên</button><button class="act alt rs">Đặt lại</button><button class="act sv" disabled>Ghi vào bảng</button></div>' +
+   '<div class="readout">Số chỉ lực kế: <b class="F">0.0000</b> N<br>Lực lớn nhất: <b class="pk">—</b> N</div><div class="msg"></div></div></div>' +
+   '<table class="dt"><thead><tr><th>Lần</th><th>F_max (N)</th><th>σ (mN/m)</th></tr></thead><tbody class="tb"></tbody></table>' +
+   '<div class="res"></div><div class="btns"><button class="act alt rv">Hiện giá trị chuẩn và sai số</button><button class="act alt clr">Xoá bảng</button></div>';
+  const q = s => root.querySelector(s), g = q("canvas").getContext("2d");
+  const LIQ = [{ s: 72.75, k: 0.1425 }, { s: 25, k: 0.05 }, { s: 22.3, k: 0.09 }, { s: 63.4, k: 0.06 }, { s: 33, k: 0.07 }];
+  const hb = 4, hp = 2.6;
+  let h = 0, running = false, last = 0, factor = 1, Fmax = 0, peak = 0, done = false, rows = [];
+  const sigmaRef = () => { const L = LIQ[q(".liq").selectedIndex]; return L.s - L.k * (+q(".T").value - 20); };
+  const Ftrue = x => x >= hb ? 0 : x < hp ? Fmax * Math.sin(x / hp * Math.PI / 2) : Fmax * (1 - 0.08 * (x - hp) / (hb - hp));
+  function params(){ const D1 = +q(".D1").value, D2 = +q(".D2").value; return { D1, D2, ok: D1 > D2 && D2 > 0 }; }
+  function draw(reading){
+    const yS = 250, cx = 280, pxh = 18, rx = (+q(".D1").value) * 1.6;
+    g.clearRect(0, 0, 560, 330);
+    g.fillStyle = "#cfe6ff"; g.fillRect(150, yS, 260, 70);
+    g.strokeStyle = "#445"; g.lineWidth = 3; g.beginPath(); g.moveTo(150, 170); g.lineTo(150, 320); g.lineTo(410, 320); g.lineTo(410, 170); g.stroke();
+    g.strokeStyle = "#5aa0e6"; g.lineWidth = 2; g.beginPath(); g.moveTo(152, yS); g.lineTo(408, yS); g.stroke();
+    const ry = yS - h * pxh - 8;
+    if (h > 0.05 && h < hb) { g.fillStyle = "rgba(100,170,240,.38)"; g.beginPath(); g.moveTo(cx - rx, ry); g.lineTo(cx - rx * 0.97, yS); g.lineTo(cx + rx * 0.97, yS); g.lineTo(cx + rx, ry); g.closePath(); g.fill(); }
+    g.strokeStyle = "#333"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(cx - rx * 0.8, ry - 6); g.lineTo(cx, 62); g.moveTo(cx + rx * 0.8, ry - 6); g.lineTo(cx, 62); g.stroke();
+    g.strokeStyle = "#6b6b6b"; g.lineWidth = 5; g.beginPath(); g.ellipse(cx, ry, rx, 9, 0, 0, 2 * Math.PI); g.stroke();
+    g.fillStyle = "#f4f4f4"; g.strokeStyle = "#333"; g.lineWidth = 2; g.fillRect(cx - 55, 8, 110, 54); g.strokeRect(cx - 55, 8, 110, 54);
+    g.fillStyle = "#111"; g.font = "bold 16px monospace"; g.textAlign = "center"; g.fillText(reading.toFixed(4) + " N", cx, 40);
+    g.font = "11px sans-serif"; g.fillStyle = "#555"; g.fillText("lực kế", cx, 22);
+    g.fillStyle = "#234"; g.textAlign = "left"; g.fillText("h = " + h.toFixed(1) + " mm", 420, 260);
+  }
+  function reading(){ let F = Ftrue(h) * factor + gauss() * 0.0002; return Math.max(0, Math.round(F / 0.0005) * 0.0005); }
+  function tick(ts){
+    if (!running) return;
+    const dt = Math.min(0.05, (ts - last) / 1000); last = ts; h += 1.2 * dt;
+    const r = reading(); if (r > peak) peak = r;
+    q(".F").textContent = r.toFixed(4); q(".pk").textContent = peak.toFixed(4); draw(r);
+    if (h >= 7) { running = false; done = true; q(".go").disabled = false; q(".sv").disabled = false; q(".msg").textContent = "Màng chất lỏng đã đứt. Ghi F_max vào bảng."; draw(0); return; }
+    requestAnimationFrame(tick);
+  }
+  function reset(){ running = false; h = 0; peak = 0; done = false; q(".F").textContent = "0.0000"; q(".pk").textContent = "—"; q(".go").disabled = false; q(".sv").disabled = true; q(".msg").textContent = ""; draw(0); }
+  q(".go").onclick = () => {
+    const p = params(); if (!p.ok) { q(".msg").textContent = "Cần D₁ > D₂ > 0."; return; }
+    reset(); Fmax = sigmaRef() / 1000 * Math.PI * (p.D1 + p.D2) / 1000; factor = 1 + gauss() * 0.012;
+    running = true; q(".go").disabled = true; last = performance.now(); requestAnimationFrame(tick);
+  };
+  q(".rs").onclick = reset;
+  q(".T").oninput = () => { q(".Tv").textContent = q(".T").value; };
+  ["liq", "D1", "D2", "T"].forEach(c => q("." + c).addEventListener("change", reset));
+  function table(){
+    q(".tb").innerHTML = rows.map((r, i) => "<tr><td>" + (i + 1) + "</td><td>" + r.F.toFixed(4) + "</td><td>" + r.s.toFixed(1) + "</td></tr>").join("");
+    q(".res").innerHTML = rows.length ? "σ " + stat(rows.map(r => r.s), 1, "mN/m") : "";
+  }
+  q(".sv").onclick = () => {
+    if (!done || peak <= 0) return; if (rows.length >= 10) { q(".msg").textContent = "Bảng đã đủ 10 lần."; return; }
+    const p = params(); rows.push({ F: peak, s: peak / (Math.PI * (p.D1 + p.D2) / 1000) * 1000 }); q(".sv").disabled = true; done = false; table();
+  };
+  q(".clr").onclick = () => { rows = []; table(); };
+  q(".rv").onclick = () => {
+    if (!rows.length) return; const m = mean(rows.map(r => r.s)), ref = sigmaRef();
+    q(".res").innerHTML += '<br><span class="ok">Giá trị mô hình: ' + ref.toFixed(1) + " mN/m. Sai số tương đối: " + (Math.abs(m - ref) / ref * 100).toFixed(1) + " %</span>";
+  };
+  draw(0);
+};
+
+/* ================= 11.1A Lực từ lên đoạn dây ================= */
+MOUNTS.magforce = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="560" height="340"></canvas></div><div class="ctrl">' +
+   '<label>Cảm ứng từ B: <b class="Bv">0.20</b> T<input type="range" class="B" min="0" max="0.5" step="0.01" value="0.2"></label>' +
+   '<label>Cường độ dòng điện I: <b class="Iv">2.0</b> A<input type="range" class="I" min="0" max="5" step="0.1" value="2"></label>' +
+   '<label>Chiều dài đoạn dây l: <b class="lv">0.10</b> m<input type="range" class="l" min="0.02" max="0.2" step="0.01" value="0.1"></label>' +
+   '<label>Góc α giữa dây và đường sức: <b class="av">90</b>°<input type="range" class="a" min="0" max="180" step="5" value="90"></label>' +
+   '<div class="btns"><button class="act alt flip">Đảo chiều dòng điện</button><button class="act sv">Ghi vào bảng</button></div>' +
+   '<div class="readout">Lực từ đo được: <b class="Fv">0.0000</b> N<br>Chiều lực: <b class="dir">—</b></div></div></div>' +
+   '<p class="hint">Quy tắc bàn tay trái: đường sức từ xuyên vào lòng bàn tay, chiều từ cổ tay đến ngón tay là chiều dòng điện, ngón cái choãi ra 90° chỉ chiều lực từ.</p>' +
+   '<table class="dt"><thead><tr><th>Lần</th><th>B (T)</th><th>I (A)</th><th>l (m)</th><th>α (°)</th><th>F (N)</th><th>B = F/(I·l·sinα) (T)</th></tr></thead><tbody class="tb"></tbody></table>' +
+   '<div class="btns"><button class="act alt clr">Xoá bảng</button></div>';
+  const q = s => root.querySelector(s), g = q("canvas").getContext("2d");
+  let sgn = 1, rows = [], Fm = 0;
+  const val = c => +q("." + c).value;
+  function physics(){ return val("B") * val("I") * val("l") * Math.sin(val("a") * Math.PI / 180); }
+  function update(){
+    q(".Bv").textContent = val("B").toFixed(2); q(".Iv").textContent = val("I").toFixed(1); q(".lv").textContent = val("l").toFixed(2); q(".av").textContent = val("a");
+    const F = physics(); Fm = Math.max(0, Math.round(F * (1 + gauss() * 0.01) / 0.0001) * 0.0001);
+    q(".Fv").textContent = Fm.toFixed(4); q(".dir").textContent = F < 1e-9 ? "không có lực" : (sgn > 0 ? "⊗ vào trong trang giấy" : "⊙ ra ngoài trang giấy"); draw(F);
+  }
+  function draw(F){
+    g.clearRect(0, 0, 560, 340); const B = val("B");
+    g.strokeStyle = "rgba(60,100,220," + (0.15 + B / 0.5 * 0.75) + ")"; g.fillStyle = g.strokeStyle; g.lineWidth = 2;
+    if (B > 0) for (let y = 40; y < 320; y += 55) for (let x = 30; x < 540; x += 70) { g.beginPath(); g.moveTo(x, y); g.lineTo(x + 44, y); g.stroke(); g.beginPath(); g.moveTo(x + 44, y); g.lineTo(x + 36, y - 4); g.lineTo(x + 36, y + 4); g.closePath(); g.fill(); }
+    g.fillStyle = "#3a5bd0"; g.font = "12px sans-serif"; g.textAlign = "left"; g.fillText("B →", 8, 16);
+    const cx = 280, cy = 175, len = val("l") * 1000, a = val("a") * Math.PI / 180, dx = Math.cos(a) * len / 2, dy = -Math.sin(a) * len / 2;
+    g.strokeStyle = "#b45f06"; g.lineWidth = 7; g.lineCap = "round"; g.beginPath(); g.moveTo(cx - dx, cy - dy); g.lineTo(cx + dx, cy + dy); g.stroke();
+    if (val("I") > 0) { const hx = sgn > 0 ? cx + dx : cx - dx, hy = sgn > 0 ? cy + dy : cy - dy, ux = sgn * Math.cos(a), uy = -sgn * Math.sin(a); g.fillStyle = "#c0251e"; g.beginPath(); g.moveTo(hx + ux * 14, hy + uy * 14); g.lineTo(hx - uy * 8, hy + ux * 8); g.lineTo(hx + uy * 8, hy - ux * 8); g.closePath(); g.fill(); }
+    g.fillStyle = "#111"; g.font = "13px sans-serif"; g.fillText("I", cx + dx + 20, cy + dy - 8);
+    if (F > 1e-9) {
+      const r = 14 + Math.min(26, F * 45);
+      g.fillStyle = "#fff"; g.strokeStyle = "#c0251e"; g.lineWidth = 3; g.beginPath(); g.arc(cx, cy + 62, r, 0, 2 * Math.PI); g.fill(); g.stroke(); g.fillStyle = "#c0251e";
+      if (sgn > 0) { g.beginPath(); g.moveTo(cx - r * 0.55, cy + 62 - r * 0.55); g.lineTo(cx + r * 0.55, cy + 62 + r * 0.55); g.moveTo(cx + r * 0.55, cy + 62 - r * 0.55); g.lineTo(cx - r * 0.55, cy + 62 + r * 0.55); g.stroke(); }
+      else { g.beginPath(); g.arc(cx, cy + 62, r * 0.28, 0, 2 * Math.PI); g.fill(); }
+      g.font = "12px sans-serif"; g.fillText("F từ", cx + r + 8, cy + 66);
+    }
+  }
+  ["B", "I", "l", "a"].forEach(c => q("." + c).oninput = update);
+  q(".flip").onclick = () => { sgn = -sgn; update(); };
+  function table(){ q(".tb").innerHTML = rows.map((r, i) => "<tr><td>" + (i + 1) + "</td><td>" + r.B.toFixed(2) + "</td><td>" + r.I.toFixed(1) + "</td><td>" + r.l.toFixed(2) + "</td><td>" + r.a + "</td><td>" + r.F.toFixed(4) + "</td><td>" + (r.est === null ? "—" : r.est.toFixed(3)) + "</td></tr>").join(""); }
+  q(".sv").onclick = () => { if (rows.length >= 12) return; const B = val("B"), I = val("I"), l = val("l"), a = val("a"), s = Math.sin(a * Math.PI / 180); rows.push({ B, I, l, a, F: Fm, est: (I > 0 && s > 0.01 && Fm > 0) ? Fm / (I * l * s) : null }); table(); };
+  q(".clr").onclick = () => { rows = []; table(); };
+  update();
+};
+
+/* ================= 11.1B Cảm ứng điện từ ================= */
+MOUNTS.induction = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="600" height="320"></canvas><p class="hint">Kéo nam châm bằng chuột (hoặc ngón tay) ra vào cuộn dây.</p></div><div class="ctrl">' +
+   '<label>Số vòng dây N<select class="N"><option>100</option><option selected>200</option><option>400</option></select></label>' +
+   '<label>Độ mạnh nam châm: <b class="Sv">2.0</b><input type="range" class="S" min="1" max="3" step="0.5" value="2"></label>' +
+   '<label>Chu kì chuyển động tự động<select class="per"><option value="1.5">Nhanh (1,5 s)</option><option value="3" selected>Vừa (3 s)</option><option value="6">Chậm (6 s)</option></select></label>' +
+   '<div class="btns"><button class="act auto">Tự động</button><button class="act alt pol">Đổi cực nam châm</button><button class="act alt pk0">Xoá đỉnh</button></div>' +
+   '<div class="readout">Suất điện động: e = <b class="ev">0</b> mV<br>Đỉnh |e|max = <b class="pk">0</b> mV<br>Kim điện kế: <b class="nd">đứng yên</b></div></div></div>';
+  const q = s => root.querySelector(s), cv = q("canvas"), g = cv.getContext("2d");
+  const cx = 380, cy = 170, ppc = 10;
+  let mx = 150, pol = 1, auto = false, tAuto = 0, dragging = false, drgOff = 0, phiPrev = null, tPrev = 0, emf = 0, peak = 0, needle = 0;
+  const phi = X => pol * (+q(".S").value) / Math.pow(1 + Math.pow(X / 5, 2), 1.5);
+  function drawScene(){
+    g.clearRect(0, 0, 600, 320);
+    const N = +q(".N").value, turns = N / 100 * 3;
+    g.strokeStyle = "#b45f06"; g.lineWidth = 3;
+    for (let i = 0; i < turns; i++) { const x = cx - 20 + i * (40 / Math.max(1, turns - 1)); g.beginPath(); g.ellipse(x, cy, 9, 48, 0, 0, 2 * Math.PI); g.stroke(); }
+    g.beginPath(); g.moveTo(cx - 20, cy + 48); g.lineTo(cx - 20, 285); g.lineTo(500, 285); g.lineTo(500, 250); g.moveTo(cx + 20, cy + 48); g.lineTo(cx + 20, 300); g.lineTo(560, 300); g.lineTo(560, 250); g.stroke();
+    const gx = 500, gy = 215; g.fillStyle = "#fff"; g.strokeStyle = "#333"; g.lineWidth = 2; g.beginPath(); g.arc(gx, gy, 42, Math.PI, 2 * Math.PI); g.lineTo(gx + 42, gy + 10); g.lineTo(gx - 42, gy + 10); g.closePath(); g.fill(); g.stroke();
+    g.strokeStyle = "#c0251e"; g.lineWidth = 2.5; g.beginPath(); g.moveTo(gx, gy + 6); g.lineTo(gx + 36 * Math.sin(needle), gy + 6 - 36 * Math.cos(needle)); g.stroke();
+    g.fillStyle = "#222"; g.font = "11px sans-serif"; g.textAlign = "center"; g.fillText("điện kế", gx, gy + 24); g.textAlign = "left";
+    const b = clamp(Math.abs(emf) / 250, 0, 1), bx = 560, by = 215;
+    g.fillStyle = "rgba(255,220,60," + (0.1 + 0.9 * b) + ")"; g.strokeStyle = "#555"; g.lineWidth = 2; g.beginPath(); g.arc(bx, by - 8, 18, 0, 2 * Math.PI); g.fill(); g.stroke(); g.fillRect(bx - 8, by + 8, 16, 10);
+    g.fillStyle = "#222"; g.textAlign = "center"; g.fillText("bóng đèn", bx, by + 34); g.textAlign = "left";
+    const L = 90, H = 36;
+    g.fillStyle = pol > 0 ? "#d33" : "#2457d6"; g.fillRect(mx - L / 2, cy - H / 2, L / 2, H); g.fillStyle = pol > 0 ? "#2457d6" : "#d33"; g.fillRect(mx, cy - H / 2, L / 2, H);
+    g.fillStyle = "#fff"; g.font = "bold 15px sans-serif"; g.textAlign = "center"; g.fillText(pol > 0 ? "N" : "S", mx - L / 4, cy + 5); g.fillText(pol > 0 ? "S" : "N", mx + L / 4, cy + 5); g.textAlign = "left";
+  }
+  function loop(ts){
+    if (!root.isConnected) return;
+    const t = ts / 1000;
+    if (auto) { tAuto += (t - (tPrev || t)); mx = cx + 170 * Math.sin(2 * Math.PI * tAuto / (+q(".per").value)) - 40; }
+    const X = (mx - cx) / ppc, ph = phi(X), dt = t - tPrev;
+    if (phiPrev !== null && dt > 0 && dt < 0.2) { const e = -(+q(".N").value) * (ph - phiPrev) / dt * 0.5; emf = 0.75 * emf + 0.25 * e; }
+    phiPrev = ph; tPrev = t;
+    if (!auto && !dragging) emf *= 0.85;
+    needle += (clamp(emf / 500, -1, 1) * 0.9 - needle) * 0.3;
+    if (Math.abs(emf) > peak) peak = Math.abs(emf);
+    q(".ev").textContent = emf.toFixed(0); q(".pk").textContent = peak.toFixed(0);
+    q(".nd").textContent = Math.abs(emf) < 5 ? "đứng yên" : (emf > 0 ? "lệch sang phải" : "lệch sang trái");
+    drawScene(); requestAnimationFrame(loop);
+  }
+  function pos(ev){ const r = cv.getBoundingClientRect(); return (ev.clientX - r.left) * 600 / r.width; }
+  cv.addEventListener("pointerdown", ev => { const p = pos(ev); if (Math.abs(p - mx) < 55) { dragging = true; auto = false; q(".auto").textContent = "Tự động"; drgOff = mx - p; cv.setPointerCapture(ev.pointerId); } });
+  cv.addEventListener("pointermove", ev => { if (dragging) mx = clamp(pos(ev) + drgOff, 60, 560); });
+  cv.addEventListener("pointerup", () => { dragging = false; });
+  q(".auto").onclick = () => { auto = !auto; tAuto = 0; q(".auto").textContent = auto ? "Dừng" : "Tự động"; };
+  q(".pol").onclick = () => { pol = -pol; phiPrev = null; };
+  q(".pk0").onclick = () => { peak = 0; };
+  q(".S").oninput = () => { q(".Sv").textContent = (+q(".S").value).toFixed(1); };
+  requestAnimationFrame(loop);
+};
+
+/* ================= 11.2 Thấu kính ================= */
+MOUNTS.lens = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="640" height="300"></canvas></div><div class="ctrl">' +
+   '<label>Khoảng cách vật – thấu kính d: <b class="dv">30.0</b> cm<input type="range" class="d" min="15" max="55" step="0.5" value="30"></label>' +
+   '<label>Khoảng cách màn – thấu kính d′: <b class="pv">30.0</b> cm<input type="range" class="p" min="10" max="80" step="0.1" value="30"></label>' +
+   '<div class="readout">Ảnh trên màn: <b class="sh">—</b></div>' +
+   '<div class="btns"><button class="act rec">Ghi vào bảng</button><button class="act alt nl">Đổi thấu kính</button><button class="act alt clr">Xoá bảng</button></div><div class="msg"></div></div></div>' +
+   '<div class="lg"></div><div class="res mean"></div><div class="btns"><button class="act alt rv">Hiện f thật</button></div><div class="res tr"></div>';
+  const q = s => root.querySelector(s), g = q("canvas").getContext("2d");
+  const lg = Log(q(".lg"), ["d (cm)", "d′ (cm)", "d + d′ (cm)", "f = dd′/(d + d′) (cm)"]);
+  let f = [10, 12, 15, 20][Math.floor(Math.random() * 4)] + Math.round(gauss() * 5) / 10;
+  const ppc = 4.2, LX = 60 * ppc, AY = 150, v = c => +q("." + c).value;
+  function geom(){ const d = v("d"), ok = d > f + 0.5, dt = ok ? d * f / (d - f) : Infinity; return { d, ok, dt, dp: v("p") }; }
+  function update(){
+    q(".dv").textContent = v("d").toFixed(1); q(".pv").textContent = v("p").toFixed(1);
+    const s = geom(), blur = s.ok ? Math.abs(s.dp - s.dt) : 99, sharp = s.ok && blur <= 0.5;
+    q(".sh").textContent = !s.ok ? "không có ảnh thật (d ≤ f)" : sharp ? "rõ nét" : blur < 3 ? "hơi nhòe" : "nhòe";
+    draw(s, blur);
+  }
+  function draw(s, blur){
+    g.clearRect(0, 0, 640, 300);
+    g.strokeStyle = "#bbb"; g.lineWidth = 1; g.beginPath(); g.moveTo(0, AY); g.lineTo(640, AY); g.stroke();
+    g.fillStyle = "#888"; g.font = "10px sans-serif"; for (let c = -60; c <= 80; c += 10) { const x = LX + c * ppc; g.fillRect(x, AY, 1, 5); g.fillText(c, x - 6, AY + 16); }
+    g.strokeStyle = "#2457d6"; g.lineWidth = 3; g.beginPath(); g.ellipse(LX, AY, 7, 70, 0, 0, 2 * Math.PI); g.stroke();
+    const ox = LX - s.d * ppc, hObj = 36; arrow(g, ox, AY, ox, AY - hObj, "#c0251e", 3);
+    g.fillStyle = "#c0251e"; g.fillText("vật", ox - 8, AY - hObj - 6);
+    const sx = LX + s.dp * ppc; g.strokeStyle = "#333"; g.lineWidth = 4; g.beginPath(); g.moveTo(sx, AY - 80); g.lineTo(sx, AY + 80); g.stroke(); g.fillStyle = "#333"; g.fillText("màn", sx - 8, AY + 96);
+    const tip = { x: ox, y: AY - hObj };
+    g.lineWidth = 1; g.strokeStyle = "rgba(192,37,30,.45)";
+    [-60, 0, 60].forEach(h => { const yL = AY + h; g.beginPath(); g.moveTo(tip.x, tip.y); g.lineTo(LX, yL);
+      if (s.ok) { const itx = LX + s.dt * ppc, ity = AY + (hObj * s.dt / s.d); const m = (ity - yL) / (itx - LX); g.lineTo(sx, yL + m * (sx - LX)); } else g.lineTo(LX + 200, yL); g.stroke(); });
+    if (s.ok) {
+      const mag = s.dt / s.d, himg = hObj * mag, spot = 1 + blur * 1.1;
+      g.save(); g.shadowColor = "#c0251e"; g.shadowBlur = Math.min(24, blur * 2.2); g.strokeStyle = "rgba(192,37,30,.9)"; g.lineWidth = 3;
+      g.beginPath(); g.moveTo(sx, AY); g.lineTo(sx, AY + clamp(himg, 0, 75)); g.stroke(); g.restore();
+      g.fillStyle = "rgba(192,37,30," + clamp(1 - blur / 8, 0.2, 0.95) + ")"; g.beginPath(); g.arc(sx, AY + clamp(himg, 0, 75), Math.min(spot, 14), 0, 2 * Math.PI); g.fill();
+    }
+    g.fillStyle = "#555"; g.font = "11px sans-serif"; g.fillText("(thang chia: cm, gốc tại thấu kính)", 10, 290);
+  }
+  q(".d").oninput = update; q(".p").oninput = update;
+  function showMean(){ const d = lg.data(); q(".mean").innerHTML = d.length ? "f " + stat(d.map(x => x.f), 2, "cm") : ""; }
+  q(".rec").onclick = () => {
+    const s = geom(); if (!s.ok) { q(".msg").textContent = "Vật phải đặt xa thấu kính hơn tiêu cự."; return; }
+    if (Math.abs(s.dp - s.dt) > 0.5) { q(".msg").textContent = "Ảnh chưa rõ nét: hãy dịch màn đến khi ảnh sắc nét."; return; }
+    q(".msg").textContent = "";
+    const dm = rnd(s.d + gauss() * 0.1, 0.1), pm = rnd(s.dp + gauss() * 0.1, 0.1), ff = dm * pm / (dm + pm);
+    lg.add([dm.toFixed(1), pm.toFixed(1), (dm + pm).toFixed(1), ff.toFixed(2)], { f: ff }); showMean();
+  };
+  q(".nl").onclick = () => { f = [10, 12, 15, 20][Math.floor(Math.random() * 4)] + Math.round(gauss() * 5) / 10; lg.clear(); showMean(); q(".tr").textContent = ""; update(); };
+  q(".clr").onclick = () => { lg.clear(); showMean(); };
+  q(".rv").onclick = () => { const d = lg.data(); q(".tr").innerHTML = '<span class="ok">Tiêu cự thật f = ' + f.toFixed(2) + " cm</span>" + (d.length ? " &nbsp; Sai số tương đối: " + (Math.abs(mean(d.map(x => x.f)) - f) / f * 100).toFixed(1) + " %" : ""); };
+  update();
+};
+
+/* ================= 11.3 E và r của pin ================= */
+MOUNTS.battery = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div>' +
+   '<svg viewBox="0 0 380 230" style="width:100%;background:#fff;border:1px solid #dde2ee;border-radius:8px" font-family="sans-serif" font-size="12">' +
+   '<g stroke="#222" stroke-width="2" fill="none"><path d="M60 60 H120 M240 60 H320 V105 M320 135 V190 H60 V135 M60 105 V60"/>' +
+   '<path d="M50 105 H70 M56 115 H64" stroke-width="3"/><path d="M60 115 V135"/>' +
+   '<path d="M120 60 l8 -12 l10 24 l10 -24 l10 24 l10 -24 l10 24 l10 -24 l8 12 H240"/><path d="M150 36 L215 82" stroke="#c0251e"/>' +
+   '<circle cx="320" cy="120" r="15"/><circle cx="160" cy="190" r="15" fill="#fff"/></g>' +
+   '<path d="M60 105 V90 H20 V190 H145" stroke="#222" stroke-width="2" fill="none" stroke-dasharray="4 3"/>' +
+   '<text x="316" y="125">A</text><text x="155" y="195">V</text><text x="68" y="104">E, r</text><text x="165" y="30">biến trở R</text></svg>' +
+   '<div class="readout">Vôn kế: U = <b class="Uv">—</b> V &nbsp;&nbsp; Ampe kế: I = <b class="Iv">—</b> A</div>' +
+   '<canvas width="520" height="280" style="margin-top:8px"></canvas></div>' +
+   '<div class="ctrl"><label>Biến trở R: <b class="Rv">10.0</b> Ω<input type="range" class="R" min="2" max="30" step="0.5" value="10"></label>' +
+   '<div class="btns"><button class="act sv">Ghi số liệu</button><button class="act alt np">Đổi pin</button><button class="act alt clr">Xoá bảng</button></div>' +
+   '<table class="dt"><thead><tr><th>Lần</th><th>U (V)</th><th>I (A)</th></tr></thead><tbody class="tb"></tbody></table>' +
+   '<div class="res fit">Cần ít nhất 2 cặp số liệu có I khác nhau.</div>' +
+   '<div class="btns"><button class="act alt rv">Hiện E, r thật</button></div><div class="res tr"></div></div></div>';
+  const q = s => root.querySelector(s), cv = q("canvas");
+  let E, r, rows = [], U = 0, I = 0;
+  function newBattery(){ E = 1.42 + Math.random() * 0.16; r = 0.6 + Math.random() * 1.8; rows = []; q(".tr").textContent = ""; measure(); table(); }
+  function measure(){
+    const R = +q(".R").value; q(".Rv").textContent = R.toFixed(1);
+    const i = E / (R + r + 0.05);
+    U = Math.round((E - i * r + gauss() * 0.003) / 0.01) * 0.01; I = Math.round((i + gauss() * 0.002) / 0.001) * 0.001;
+    q(".Uv").textContent = U.toFixed(2); q(".Iv").textContent = I.toFixed(3);
+  }
+  function table(){
+    q(".tb").innerHTML = rows.map((p, i) => "<tr><td>" + (i + 1) + "</td><td>" + p.U.toFixed(2) + "</td><td>" + p.I.toFixed(3) + "</td></tr>").join("");
+    const pts = rows.map(p => ({ x: p.I, y: p.U })), f = lineFit(pts);
+    q(".fit").innerHTML = f ? "Từ đồ thị: E = <b>" + f.a.toFixed(2) + "</b> V, r = <b>" + (-f.b).toFixed(2) + "</b> Ω" : "Cần ít nhất 2 cặp số liệu có I khác nhau.";
+    plotXY(cv, pts, "I (A)", "U (V)", f, 0.6, 1.6);
+  }
+  q(".R").oninput = measure;
+  q(".sv").onclick = () => { if (rows.length >= 12) return; rows.push({ U, I }); measure(); table(); };
+  q(".np").onclick = newBattery;
+  q(".clr").onclick = () => { rows = []; table(); };
+  q(".rv").onclick = () => { const f = lineFit(rows.map(p => ({ x: p.I, y: p.U }))); q(".tr").innerHTML = '<span class="ok">Giá trị thật: E = ' + E.toFixed(3) + " V, r = " + r.toFixed(3) + " Ω</span>" + (f ? "<br>Sai số: ΔE = " + Math.abs(f.a - E).toFixed(3) + " V, Δr = " + Math.abs(-f.b - r).toFixed(3) + " Ω" : ""); };
+  newBattery();
+};
+
+/* ================= 11.4 La bàn tang ================= */
+MOUNTS.tangent = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="480" height="400"></canvas></div><div class="ctrl">' +
+   '<label>Số vòng dây N<select class="N"><option>5</option><option selected>10</option><option>20</option><option>50</option></select></label>' +
+   '<label>Bán kính cuộn dây R: <b class="Rv">10</b> cm<input type="range" class="R" min="5" max="20" step="1" value="10"></label>' +
+   '<label>Cường độ dòng điện I: <b class="Iv">0.50</b> A<input type="range" class="I" min="0" max="1" step="0.05" value="0.5"></label>' +
+   '<div class="btns"><button class="act alt flip">Đảo chiều dòng điện</button><button class="act sv">Ghi số liệu</button></div>' +
+   '<div class="readout">Góc lệch kim: θ = <b class="th">0</b>°<br>Chiều dòng điện: <b class="dr">thuận</b></div></div></div>' +
+   '<table class="dt"><thead><tr><th>Lần</th><th>N</th><th>R (cm)</th><th>I (A)</th><th>Chiều</th><th>θ (°)</th><th>B_h = μ₀NI/(2R·tanθ) (T)</th></tr></thead><tbody class="tb"></tbody></table>' +
+   '<div class="res mean"></div><div class="btns"><button class="act alt rv">Hiện B_h thật</button><button class="act alt clr">Xoá bảng</button></div><div class="res tr"></div>';
+  const q = s => root.querySelector(s), g = q("canvas").getContext("2d");
+  const Bh = (3.6 + Math.random() * 0.8) * 1e-5;
+  let sgn = 1, rows = [], thetaMeas = 0;
+  const par = () => ({ N: +q(".N").value, R: +q(".R").value / 100, I: +q(".I").value });
+  function update(){
+    const p = par(); q(".Rv").textContent = (p.R * 100).toFixed(0); q(".Iv").textContent = p.I.toFixed(2);
+    const Bc = MU0 * p.N * p.I / (2 * p.R), th = Math.atan(Bc / Bh) * 180 / Math.PI;
+    thetaMeas = p.I === 0 ? 0 : Math.round(th + gauss() * 0.4);
+    q(".th").textContent = thetaMeas; q(".dr").textContent = sgn > 0 ? "thuận (lệch về phía Đông)" : "ngược (lệch về phía Tây)"; draw(p, Bc, th);
+  }
+  function draw(p, Bc, th){
+    g.clearRect(0, 0, 480, 400); const cx = 240, cy = 210, rc = 100;
+    g.fillStyle = "#222"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText("B", cx, 24); g.font = "12px sans-serif"; g.fillStyle = "#666"; g.fillText("(Bắc từ)", cx, 40);
+    g.fillText("Đ", cx + rc + 40, cy + 4); g.fillText("T", cx - rc - 40, cy + 4);
+    const half = p.R * 100 * 6.5; g.fillStyle = "#c98b4a"; g.fillRect(cx - 7, cy - half, 14, 2 * half);
+    g.fillStyle = "#8a5a22"; g.font = "11px sans-serif"; g.fillText("cuộn dây (nhìn từ trên)", cx + 90, cy + half + 14);
+    g.fillStyle = "#fff"; g.strokeStyle = "#333"; g.lineWidth = 3; g.beginPath(); g.arc(cx, cy, rc * 0.62, 0, 2 * Math.PI); g.fill(); g.stroke();
+    g.fillStyle = "#555"; g.font = "10px sans-serif"; g.fillText("N", cx, cy - rc * 0.62 + 14);
+    const ang = sgn * (p.I === 0 ? 0 : th) * Math.PI / 180, L = rc * 0.52, ux = Math.sin(ang), uy = -Math.cos(ang);
+    g.lineCap = "round"; g.lineWidth = 8; g.strokeStyle = "#d33"; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + ux * L, cy + uy * L); g.stroke();
+    g.strokeStyle = "#889"; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx - ux * L, cy - uy * L); g.stroke();
+    g.fillStyle = "#222"; g.beginPath(); g.arc(cx, cy, 4, 0, 2 * Math.PI); g.fill();
+    const k = 60; arrow(g, cx, cy, cx, cy - k, "#2457d6", 2.5); g.fillStyle = "#2457d6"; g.font = "12px sans-serif"; g.textAlign = "left"; g.fillText("B_h", cx + 6, cy - k - 4);
+    const bl = Math.min(k * Bc / Bh, 150);
+    if (p.I > 0) { arrow(g, cx, cy, cx + sgn * bl, cy, "#12805c", 2.5); g.fillStyle = "#12805c"; g.fillText("B_c", cx + sgn * bl + (sgn > 0 ? 4 : -28), cy - 8); arrow(g, cx, cy, cx + sgn * bl, cy - k, "#7a3fd1", 2); }
+  }
+  ["N", "R", "I"].forEach(c => q("." + c).addEventListener("input", update));
+  q(".flip").onclick = () => { sgn = -sgn; update(); };
+  function table(){
+    q(".tb").innerHTML = rows.map((r, i) => "<tr><td>" + (i + 1) + "</td><td>" + r.N + "</td><td>" + (r.R * 100).toFixed(0) + "</td><td>" + r.I.toFixed(2) + "</td><td>" + (r.s > 0 ? "thuận" : "ngược") + "</td><td>" + r.th + "</td><td>" + (r.b * 1e5).toFixed(2) + "×10⁻⁵</td></tr>").join("");
+    q(".mean").innerHTML = rows.length ? "B_h trung bình = <b>" + (mean(rows.map(r => r.b)) * 1e5).toFixed(2) + "×10⁻⁵ T</b>, ΔB_h = " + (meanDev(rows.map(r => r.b)) * 1e5).toFixed(2) + "×10⁻⁵ T" : "";
+  }
+  q(".sv").onclick = () => { const p = par(); if (p.I <= 0 || thetaMeas < 1 || rows.length >= 12) return; rows.push({ N: p.N, R: p.R, I: p.I, s: sgn, th: thetaMeas, b: MU0 * p.N * p.I / (2 * p.R * Math.tan(thetaMeas * Math.PI / 180)) }); table(); update(); };
+  q(".clr").onclick = () => { rows = []; table(); };
+  q(".rv").onclick = () => { const m = rows.length ? mean(rows.map(r => r.b)) : null; q(".tr").innerHTML = '<span class="ok">B_h thật (mô hình) = ' + (Bh * 1e5).toFixed(2) + "×10⁻⁵ T</span>" + (m ? "<br>Sai số tương đối: " + (Math.abs(m - Bh) / Bh * 100).toFixed(1) + " %" : ""); };
+  update();
+};
+
+/* ================= 12.1 Con lắc đơn / con lắc lò xo ================= */
+function mountOsc(root, mode){
+  const P = mode === "pendulum";
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="480" height="360"></canvas></div><div class="ctrl">' +
+   (P ? '<label>Chiều dài l: <b class="xv">50</b> cm<input type="range" class="x" min="20" max="100" step="5" value="50"></label>'
+      : '<label>Khối lượng m: <b class="xv">100</b> g<input type="range" class="x" min="50" max="300" step="25" value="100"></label>') +
+   '<label>Số dao động n<select class="n"><option>10</option><option>20</option></select></label>' +
+   '<div class="btns"><button class="act go">Đo thời gian (tua nhanh ×4)</button><button class="act rec" disabled>Ghi vào bảng</button></div>' +
+   '<div class="readout">Đồng hồ: t = <b class="tv">0.00</b> s<br>Đã đếm: <b class="cnt">0</b> dao động</div><div class="msg"></div></div></div>' +
+   '<div class="lg"></div><canvas class="ch" width="520" height="260" style="margin-top:8px"></canvas><div class="res fit"></div>' +
+   '<div class="btns"><button class="act alt rv">Hiện giá trị thật</button><button class="act alt clr">Xoá bảng</button></div><div class="res tr"></div>';
+  const q = s => root.querySelector(s), g = q("canvas").getContext("2d");
+  const gTrue = 9.78 + gauss() * 0.04, kTrue = 15 + Math.random() * 10, ms = 0.02, SP = 4;
+  const lg = Log(q(".lg"), [P ? "l (cm)" : "m (g)", "n", "t (s)", "T = t/n (s)", "T² (s²)"]);
+  let running = false, t0 = 0, tTrue = 0, tMeas = null, done = false, tau = 0, Tcur = 1;
+  const xv = () => +q(".x").value, n = () => +q(".n").value;
+  const Tof = () => P ? 2 * Math.PI * Math.sqrt(xv() / 100 / gTrue) : 2 * Math.PI * Math.sqrt((xv() / 1000 + ms / 3) / kTrue);
+  function draw(){
+    g.clearRect(0, 0, 480, 360); g.fillStyle = "#cfd6e6"; g.fillRect(140, 14, 200, 8);
+    const T = Tof(), ph = Math.cos(2 * Math.PI * tau / T);
+    if (P) {
+      const a = 10 * Math.PI / 180 * ph, L = xv() * 3, px = 240, py = 22, bx = px + L * Math.sin(a), by = py + L * Math.cos(a);
+      g.strokeStyle = "#333"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(px, py); g.lineTo(bx, by); g.stroke();
+      g.fillStyle = "#2457d6"; g.beginPath(); g.arc(bx, by, 14, 0, 2 * Math.PI); g.fill();
+      g.fillStyle = "#234"; g.font = "12px sans-serif"; g.fillText("l = " + xv() + " cm", 20, 30);
+    } else {
+      const m = xv() / 1000, ext = m * gTrue / kTrue * 600, y = 22 + 80 + ext + 18 * ph, px = 240;
+      g.strokeStyle = "#444"; g.lineWidth = 2; g.beginPath(); g.moveTo(px, 22);
+      const segs = 14, y0 = 40; g.lineTo(px, y0);
+      for (let i = 1; i <= segs; i++) g.lineTo(px + (i % 2 ? 14 : -14), y0 + (y - 20 - y0) * i / segs);
+      g.lineTo(px, y - 20); g.stroke();
+      const sz = 22 + m * 60; g.fillStyle = "#2457d6"; g.fillRect(px - sz / 2, y - 20, sz, sz); g.fillStyle = "#fff"; g.font = "11px sans-serif"; g.textAlign = "center"; g.fillText(xv() + " g", px, y - 20 + sz / 2 + 4); g.textAlign = "left";
+    }
+  }
+  function reset(){ running = false; tau = 0; tMeas = null; done = false; q(".tv").textContent = "0.00"; q(".cnt").textContent = "0"; q(".rec").disabled = true; q(".go").disabled = false; q(".msg").textContent = ""; draw(); }
+  function tick(ts){
+    if (!running) return;
+    const el = (ts - t0) / 1000 * SP;
+    if (el >= tTrue) { running = false; tau = tTrue; tMeas = Math.max(0.01, rnd(tTrue + gauss() * 0.04, 0.01)); done = true; q(".tv").textContent = tMeas.toFixed(2); q(".cnt").textContent = n(); q(".rec").disabled = false; q(".go").disabled = false; draw(); return; }
+    tau = el; q(".tv").textContent = el.toFixed(2); q(".cnt").textContent = Math.floor(el / Tcur); draw(); requestAnimationFrame(tick);
+  }
+  q(".go").onclick = () => { reset(); Tcur = Tof(); tTrue = n() * Tcur * (1 + gauss() * 0.002); running = true; q(".go").disabled = true; t0 = performance.now(); requestAnimationFrame(tick); };
+  q(".x").oninput = () => { q(".xv").textContent = xv(); reset(); };
+  q(".n").onchange = reset;
+  function refresh(){
+    const d = lg.data(), pts = d.map(r => ({ x: r.xs, y: r.T2 })), f = lineFit(pts);
+    plotXY(q(".ch"), pts, P ? "l (m)" : "m (kg)", "T² (s²)", f, P ? 1 : 0.3, P ? 4 : 1);
+    q(".fit").innerHTML = f ? "Hệ số góc = " + f.b.toFixed(3) + " s²/" + (P ? "m" : "kg") + " → " + (P ? "g = 4π²/hệ số góc = <b>" + (4 * Math.PI * Math.PI / f.b).toFixed(2) + "</b> m/s²" : "k = 4π²/hệ số góc = <b>" + (4 * Math.PI * Math.PI / f.b).toFixed(1) + "</b> N/m") : "Cần ít nhất 2 lần đo với giá trị khác nhau.";
+  }
+  q(".rec").onclick = () => {
+    if (!done) return; const T = tMeas / n(), xs = P ? xv() / 100 : xv() / 1000;
+    lg.add([xv(), n(), tMeas.toFixed(2), T.toFixed(3), (T * T).toFixed(3)], { xs, T2: T * T }); q(".rec").disabled = true; done = false; refresh();
+  };
+  q(".clr").onclick = () => { lg.clear(); refresh(); };
+  q(".rv").onclick = () => { q(".tr").innerHTML = '<span class="ok">' + (P ? "g thật (mô hình) = " + gTrue.toFixed(3) + " m/s²" : "k thật (mô hình) = " + kTrue.toFixed(2) + " N/m, khối lượng lò xo " + (ms * 1000).toFixed(0) + " g (nên đồ thị không đi qua gốc)") + "</span>"; };
+  draw(); refresh();
+}
+MOUNTS.pendulum = r => mountOsc(r, "pendulum");
+MOUNTS.spring = r => mountOsc(r, "spring");
+
+/* ================= 12.2 Ống cộng hưởng ================= */
+MOUNTS.resonance = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="640" height="300"></canvas></div><div class="ctrl">' +
+   '<label>Tần số nguồn âm f<select class="f"><option>384</option><option>426</option><option>480</option><option selected>512</option><option>576</option><option>640</option></select></label>' +
+   '<label>Chiều dài cột khí l: <b class="lv">50.0</b> cm<input type="range" class="l" min="5" max="100" step="0.5" value="50"></label>' +
+   '<div class="readout">Độ to của âm: <b class="ld">0</b> %</div>' +
+   '<div class="btns"><button class="act alt s1">Ghi l₁</button><button class="act alt s2">Ghi l₂</button></div>' +
+   '<div class="readout">l₁ = <b class="l1">—</b> cm &nbsp; l₂ = <b class="l2">—</b> cm</div>' +
+   '<div class="btns"><button class="act rec">Ghi vào bảng</button><button class="act alt clr">Xoá bảng</button></div><div class="msg"></div></div></div>' +
+   '<div class="lg"></div><div class="res mean"></div><div class="btns"><button class="act alt rv">Hiện v thật</button></div><div class="res tr"></div>';
+  const q = s => root.querySelector(s), g = q("canvas").getContext("2d");
+  const Tair = 26 + Math.random() * 6, vTrue = 331.3 + 0.606 * Tair, rad = 2.5;
+  const lg = Log(q(".lg"), ["f (Hz)", "l₁ (cm)", "l₂ (cm)", "λ = 2(l₂ − l₁) (cm)", "v = λf (m/s)"]);
+  let l1 = null, l2 = null, loud = 0, ph = 0;
+  const fHz = () => +q(".f").value, lcm = () => +q(".l").value;
+  function amp(l){ const lam = vTrue / fHz() * 100, leff = l + 0.6 * rad, n = Math.max(1, Math.round((4 * leff / lam + 1) / 2)), d = Math.abs(leff - (2 * n - 1) * lam / 4); return 1 / (1 + Math.pow(d / 0.9, 2)); }
+  function draw(A){
+    g.clearRect(0, 0, 640, 300);
+    const x0 = 90, ppc = 5, y0 = 150, xp = x0 + lcm() * ppc, lam = vTrue / fHz() * 100;
+    g.fillStyle = "#555"; g.fillRect(10, y0 - 40, 24, 80); g.beginPath(); g.moveTo(34, y0 - 40); g.lineTo(x0, y0 - 24); g.lineTo(x0, y0 + 24); g.lineTo(34, y0 + 40); g.closePath(); g.fill();
+    g.fillStyle = "#fff"; g.font = "11px sans-serif"; g.fillText("loa", 12, y0 + 4);
+    g.strokeStyle = "#3b4a6b"; g.lineWidth = 3; g.beginPath(); g.moveTo(x0, y0 - 24); g.lineTo(560, y0 - 24); g.moveTo(x0, y0 + 24); g.lineTo(560, y0 + 24); g.stroke();
+    g.fillStyle = "#b45f06"; g.fillRect(xp, y0 - 23, 14, 46);
+    for (const s of [1, -1]) { g.strokeStyle = "rgba(36,87,214," + (0.25 + 0.7 * A) + ")"; g.lineWidth = 2; g.beginPath(); for (let x = x0; x <= xp; x += 2) { const dcm = (xp - x) / ppc, yy = y0 + s * 20 * Math.min(1, A + 0.12) * Math.abs(Math.sin(2 * Math.PI * dcm / lam)) * Math.cos(ph); x === x0 ? g.moveTo(x, yy) : g.lineTo(x, yy); } g.stroke(); }
+    g.fillStyle = "#888"; g.font = "10px sans-serif"; for (let c = 0; c <= 100; c += 10) { const x = x0 + c * ppc; g.fillRect(x, y0 + 30, 1, 6); g.fillText(c, x - 6, y0 + 48); }
+    g.fillStyle = "#555"; g.fillText("thang chia (cm) tính từ miệng ống", x0, y0 + 64);
+    g.fillStyle = "#e8eefc"; g.fillRect(40, 240, 560, 22); g.fillStyle = A > 0.85 ? "#12805c" : "#2457d6"; g.fillRect(40, 240, 560 * A, 22); g.strokeStyle = "#445"; g.lineWidth = 1; g.strokeRect(40, 240, 560, 22);
+    g.fillStyle = "#234"; g.font = "11px sans-serif"; g.fillText("độ to", 40, 234);
+  }
+  function loop(){ if (!root.isConnected) return; ph += 0.35; draw(loud); requestAnimationFrame(loop); }
+  function update(){ q(".lv").textContent = lcm().toFixed(1); loud = clamp(amp(lcm()) * (1 + gauss() * 0.02), 0, 1); q(".ld").textContent = (loud * 100).toFixed(0); }
+  q(".l").oninput = update; q(".f").onchange = () => { l1 = l2 = null; q(".l1").textContent = q(".l2").textContent = "—"; update(); };
+  q(".s1").onclick = () => { l1 = rnd(lcm() + gauss() * 0.1, 0.1); q(".l1").textContent = l1.toFixed(1); };
+  q(".s2").onclick = () => { l2 = rnd(lcm() + gauss() * 0.1, 0.1); q(".l2").textContent = l2.toFixed(1); };
+  function showMean(){ const d = lg.data(); q(".mean").innerHTML = d.length ? "v " + stat(d.map(x => x.v), 1, "m/s") : ""; }
+  q(".rec").onclick = () => {
+    if (l1 === null || l2 === null || l2 <= l1) { q(".msg").textContent = "Cần ghi l₁ và l₂ với l₂ > l₁ (hai vị trí cộng hưởng liên tiếp)."; return; }
+    q(".msg").textContent = ""; const lam = 2 * (l2 - l1), v = lam * fHz() / 100;
+    lg.add([fHz(), l1.toFixed(1), l2.toFixed(1), lam.toFixed(1), v.toFixed(1)], { v }); showMean();
+  };
+  q(".clr").onclick = () => { lg.clear(); showMean(); };
+  q(".rv").onclick = () => { const d = lg.data(); q(".tr").innerHTML = '<span class="ok">Nhiệt độ phòng ' + Tair.toFixed(1) + " °C → v thật = " + vTrue.toFixed(1) + " m/s</span>" + (d.length ? " &nbsp; Sai số tương đối: " + (Math.abs(mean(d.map(x => x.v)) - vTrue) / vTrue * 100).toFixed(1) + " %" : ""); };
+  update(); requestAnimationFrame(loop);
+};
+
+/* ================= 12.3 Mạch R–L–C nối tiếp ================= */
+MOUNTS.rlc = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas class="ph" width="400" height="300"></canvas><canvas class="cu" width="400" height="260" style="margin-top:8px"></canvas></div><div class="ctrl">' +
+   '<label>Điện trở R: <b class="Rv">50</b> Ω<input type="range" class="R" min="10" max="100" step="5" value="50"></label>' +
+   '<label>Cuộn cảm L<select class="L"><option value="0.05">50 mH</option><option value="0.1" selected>100 mH</option><option value="0.2">200 mH</option></select></label>' +
+   '<label>Tụ điện C<select class="C"><option value="4.7">4,7 μF</option><option value="10" selected>10 μF</option><option value="22">22 μF</option></select></label>' +
+   '<label>Tần số f: <b class="fv">100</b> Hz<input type="range" class="f" min="20" max="1000" step="5" value="100"></label>' +
+   '<div class="readout">U_R = <b class="ur">—</b> V &nbsp; U_L = <b class="ul">—</b> V<br>U_C = <b class="uc">—</b> V &nbsp; U = <b class="uu">—</b> V<br>I = <b class="ii">—</b> mA &nbsp; φ = <b class="ph2">—</b>°</div>' +
+   '<div class="btns"><button class="act rec">Ghi số liệu</button><button class="act alt clr">Xoá bảng</button></div></div></div>' +
+   '<div class="lg"></div><div class="res chk"></div><div class="btns"><button class="act alt rv">Hiện tần số cộng hưởng</button></div><div class="res tr"></div>';
+  const q = s => root.querySelector(s), gp = q(".ph").getContext("2d"), gc = q(".cu").getContext("2d");
+  const lg = Log(q(".lg"), ["f (Hz)", "U_R (V)", "U_L (V)", "U_C (V)", "U (V)", "I (mA)", "Z = U/I (Ω)"]);
+  const Usrc = 12; let shown = false, cur = null;
+  const par = () => ({ R: +q(".R").value, L: +q(".L").value, C: +q(".C").value * 1e-6, f: +q(".f").value });
+  function calc(f, p){ const w = 2 * Math.PI * f, XL = w * p.L, XC = 1 / (w * p.C), Z = Math.sqrt(p.R * p.R + (XL - XC) ** 2), I = Usrc / Z; return { XL, XC, Z, I, UR: I * p.R, UL: I * XL, UC: I * XC, phi: Math.atan2(XL - XC, p.R) }; }
+  function update(){
+    const p = par(); q(".Rv").textContent = p.R; q(".fv").textContent = p.f;
+    const c = calc(p.f, p), n = x => 1 + gauss() * 0.005;
+    cur = { f: p.f, UR: rnd(c.UR * n(), 0.01), UL: rnd(c.UL * n(), 0.01), UC: rnd(c.UC * n(), 0.01), U: rnd(Usrc * n(), 0.01), I: rnd(c.I * 1000 * n(), 0.1) };
+    q(".ur").textContent = cur.UR.toFixed(2); q(".ul").textContent = cur.UL.toFixed(2); q(".uc").textContent = cur.UC.toFixed(2); q(".uu").textContent = cur.U.toFixed(2); q(".ii").textContent = cur.I.toFixed(1); q(".ph2").textContent = (c.phi * 180 / Math.PI).toFixed(1);
+    drawPhasor(c); drawCurve(p);
+  }
+  function drawPhasor(c){
+    const g = gp; g.clearRect(0, 0, 400, 300); const k = 18, ox = 60, oy = 150;
+    g.fillStyle = "#234"; g.font = "12px sans-serif"; g.fillText("Giản đồ véc-tơ (điện áp, V)", 10, 18);
+    const ur = c.UR * k, dv = (c.UL - c.UC) * k;
+    arrow(g, ox, oy, ox + ur, oy, "#12805c", 3); g.fillStyle = "#12805c"; g.fillText("U_R", ox + ur / 2 - 8, oy + 16);
+    arrow(g, ox + ur, oy, ox + ur, oy - dv, "#7a3fd1", 3); g.fillStyle = "#7a3fd1"; g.fillText("U_L − U_C", ox + ur + 8, oy - dv / 2);
+    arrow(g, ox, oy, ox + ur, oy - dv, "#c0251e", 3); g.fillStyle = "#c0251e"; g.fillText("U = 12 V", ox + ur / 2 - 20, oy - dv / 2 - 8);
+    g.fillStyle = "#555"; g.fillText("I", ox + 6, oy + 30); g.fillText(c.phi > 0 ? "u sớm pha hơn i (mạch cảm kháng)" : c.phi < 0 ? "u trễ pha hơn i (mạch dung kháng)" : "u cùng pha với i (cộng hưởng)", 10, 285);
+  }
+  function drawCurve(p){
+    const g = gc, W = 400, H = 260, L = 46, B = 36, T = 12, R = 10; g.clearRect(0, 0, W, H);
+    const pts = []; let Imax = 0; for (let f = 20; f <= 1000; f += 10) { const I = calc(f, p).I * 1000; pts.push([f, I]); Imax = Math.max(Imax, I); }
+    const X = f => L + (f - 20) / 980 * (W - L - R), Y = I => H - B - I / (Imax * 1.1) * (H - B - T);
+    g.strokeStyle = "#444"; g.lineWidth = 1; g.beginPath(); g.moveTo(L, T); g.lineTo(L, H - B); g.lineTo(W - R, H - B); g.stroke();
+    g.fillStyle = "#444"; g.font = "11px sans-serif"; g.textAlign = "center"; for (let f = 200; f <= 1000; f += 200) g.fillText(f, X(f), H - B + 14); g.fillText("f (Hz)", W / 2, H - 6);
+    g.textAlign = "right"; for (let i = 0; i <= 4; i++) { const v = Imax * 1.1 * i / 4; g.fillText(v.toFixed(0), L - 4, Y(v) + 4); } g.textAlign = "left"; g.fillText("I (mA)", 4, 12);
+    g.strokeStyle = "#2457d6"; g.lineWidth = 2; g.beginPath(); pts.forEach((pt, i) => i ? g.lineTo(X(pt[0]), Y(pt[1])) : g.moveTo(X(pt[0]), Y(pt[1]))); g.stroke();
+    if (shown) { const f0 = 1 / (2 * Math.PI * Math.sqrt(p.L * p.C)); g.setLineDash([4, 3]); g.strokeStyle = "#c0251e"; g.beginPath(); g.moveTo(X(f0), T); g.lineTo(X(f0), H - B); g.stroke(); g.setLineDash([]); g.fillStyle = "#c0251e"; g.fillText("f₀", X(f0) + 3, T + 10); }
+    g.fillStyle = "#c0251e"; g.beginPath(); g.arc(X(p.f), Y(calc(p.f, p).I * 1000), 5, 0, 2 * Math.PI); g.fill();
+  }
+  ["R", "L", "C", "f"].forEach(c => q("." + c).addEventListener("input", () => { if (c !== "f") shown = false; update(); }));
+  q(".rec").onclick = () => {
+    const z = cur.U / (cur.I / 1000); lg.add([cur.f, cur.UR.toFixed(2), cur.UL.toFixed(2), cur.UC.toFixed(2), cur.U.toFixed(2), cur.I.toFixed(1), z.toFixed(1)], {});
+    const rhs = Math.sqrt(cur.UR ** 2 + (cur.UL - cur.UC) ** 2);
+    q(".chk").innerHTML = "Kiểm tra lần ghi gần nhất: U = " + cur.U.toFixed(2) + " V; √[U_R² + (U_L − U_C)²] = <b>" + rhs.toFixed(2) + "</b> V (sai lệch " + (Math.abs(rhs - cur.U) / cur.U * 100).toFixed(1) + " %)";
+  };
+  q(".clr").onclick = () => { lg.clear(); q(".chk").textContent = ""; };
+  q(".rv").onclick = () => { const p = par(); shown = true; q(".tr").innerHTML = '<span class="ok">f₀ = 1/(2π√LC) = ' + (1 / (2 * Math.PI * Math.sqrt(p.L * p.C))).toFixed(1) + " Hz</span>"; drawCurve(p); };
+  update();
+};
+
+/* ================= 12.4 Giao thoa khe Young ================= */
+MOUNTS.young = function(root){
+  root.innerHTML =
+   '<div class="sim-grid"><div><canvas width="600" height="150"></canvas><p class="hint">Màn rộng 50 mm. Đặt vạch đỏ và vạch xanh vào tâm hai vân sáng, đếm số khoảng vân k giữa chúng.</p></div><div class="ctrl">' +
+   '<label>Laser<select class="las"><option value="0">Đỏ</option><option value="1">Lục</option><option value="2">Lam</option></select></label>' +
+   '<label>Khoảng cách hai khe a: <b class="av">0.30</b> mm<input type="range" class="a" min="0.1" max="1" step="0.05" value="0.3"></label>' +
+   '<label>Khoảng cách khe – màn D: <b class="Dv">1.5</b> m<input type="range" class="D" min="0.5" max="3" step="0.1" value="1.5"></label>' +
+   '<label>Vạch đỏ y₁: <b class="y1v">0.0</b> mm<input type="range" class="y1" min="-25" max="25" step="0.1" value="0"></label>' +
+   '<label>Vạch xanh y₂: <b class="y2v">10.0</b> mm<input type="range" class="y2" min="-25" max="25" step="0.1" value="10"></label>' +
+   '<label>Số khoảng vân k giữa hai vạch<input type="number" class="k" value="3" min="1" max="30" step="1"></label>' +
+   '<div class="readout">Δy = <b class="dy">—</b> mm → i = Δy/k = <b class="iv">—</b> mm</div>' +
+   '<div class="btns"><button class="act rec">Ghi vào bảng</button><button class="act alt clr">Xoá bảng</button></div></div></div>' +
+   '<div class="lg"></div><div class="res mean"></div><div class="btns"><button class="act alt rv">Hiện λ thật</button></div><div class="res tr"></div>';
+  const q = s => root.querySelector(s), cv = q("canvas"), g = cv.getContext("2d");
+  const lamNom = [630 + Math.random() * 30, 515 + Math.random() * 25, 440 + Math.random() * 25], tint = [[255, 30, 30], [40, 255, 60], [60, 90, 255]];
+  const lg = Log(q(".lg"), ["a (mm)", "D (m)", "i (mm)", "λ = a·i/D (nm)"]);
+  const v = c => +q("." + c).value, pxmm = 12;
+  const lam = () => lamNom[+q(".las").value];
+  const iTrue = () => lam() * 1e-9 * v("D") / (v("a") * 1e-3) * 1e3;
+  function draw(){
+    const W = 600, H = 150, i = iTrue(), tn = tint[+q(".las").value];
+    g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+    const img = g.createImageData(W, 100);
+    for (let x = 0; x < W; x++) {
+      const y = (x - W / 2) / pxmm, I = Math.pow(Math.cos(Math.PI * y / i), 2) * Math.exp(-Math.pow(y / 24, 2));
+      for (let r = 0; r < 100; r++) { const o = (r * W + x) * 4; img.data[o] = tn[0] * I; img.data[o + 1] = tn[1] * I; img.data[o + 2] = tn[2] * I; img.data[o + 3] = 255; }
+    }
+    g.putImageData(img, 0, 0);
+    g.fillStyle = "#fff"; g.fillRect(0, 100, W, 50); g.fillStyle = "#222"; g.font = "10px sans-serif";
+    for (let m = -25; m <= 25; m++) { const x = W / 2 + m * pxmm; g.fillRect(x, 100, 1, m % 5 === 0 ? 14 : 7); if (m % 5 === 0) g.fillText(m, x - 6, 126); }
+    g.fillText("y (mm), 0 ở vân sáng trung tâm", 10, 144);
+    [[v("y1"), "#ff3b30"], [v("y2"), "#2f7bff"]].forEach(m => { const x = W / 2 + m[0] * pxmm; g.strokeStyle = m[1]; g.lineWidth = 2; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 150); g.stroke(); });
+  }
+  function update(){
+    ["a", "D"].forEach(c => q("." + c + "v").textContent = c === "a" ? v("a").toFixed(2) : v("D").toFixed(1));
+    q(".y1v").textContent = v("y1").toFixed(1); q(".y2v").textContent = v("y2").toFixed(1);
+    const dy = Math.abs(v("y2") - v("y1")); q(".dy").textContent = dy.toFixed(1); q(".iv").textContent = (dy / Math.max(1, v("k"))).toFixed(2); draw();
+  }
+  ["las", "a", "D", "y1", "y2", "k"].forEach(c => q("." + c).addEventListener("input", update));
+  q(".las").addEventListener("change", update);
+  function showMean(){ const d = lg.data(); q(".mean").innerHTML = d.length ? "λ " + stat(d.map(x => x.l), 0, "nm") : ""; }
+  q(".rec").onclick = () => {
+    const dy = Math.abs(v("y2") - v("y1")), k = Math.max(1, Math.round(v("k"))); if (dy < 0.5) return;
+    const i = dy / k, l = v("a") * i / v("D") * 1e3; lg.add([v("a").toFixed(2), v("D").toFixed(1), i.toFixed(2), l.toFixed(0)], { l }); showMean();
+  };
+  q(".clr").onclick = () => { lg.clear(); showMean(); };
+  q(".rv").onclick = () => { const d = lg.data(); q(".tr").innerHTML = '<span class="ok">Bước sóng thật của laser này = ' + lam().toFixed(0) + " nm</span>" + (d.length ? " &nbsp; Sai số tương đối: " + (Math.abs(mean(d.map(x => x.l)) - lam()) / lam() * 100).toFixed(1) + " %" : ""); };
+  update();
+};
+
+render();
+</script>
+</body>
+</html>
